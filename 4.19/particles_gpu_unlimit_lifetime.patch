@@ -1,0 +1,33 @@
+diff Engine/Source/Runtime/Engine/Private/Particles/ParticleGpuSimulation.cpp Engine/Source/Runtime/Engine/Private/Particles/ParticleGpuSimulation.cpp
+index 2cdeea099fd..604b07d3606 100644
+--- Engine/Source/Runtime/Engine/Private/Particles/ParticleGpuSimulation.cpp
++++ Engine/Source/Runtime/Engine/Private/Particles/ParticleGpuSimulation.cpp
+@@ -3776,7 +3776,7 @@ private:
+ 		for (TBitArray<>::FConstIterator BitIt(ActiveTiles); BitIt; ++BitIt)
+ 		{
+ 			const int32 BitIndex = BitIt.GetIndex();
+-			if (TileTimeOfDeath[BitIndex] <= SecondsSinceCreation)
++			if (TileTimeOfDeath[BitIndex] != 0.f && TileTimeOfDeath[BitIndex] <= SecondsSinceCreation)
+ 			{
+ 				ActiveTiles.AccessCorrespondingBit(BitIt) = false;
+ 				if ( TileToAllocateFrom == BitIndex )
+@@ -4104,7 +4104,8 @@ private:
+ 			NewParticle->Velocity = TempParticle->BaseVelocity;
+ 			NewParticle->Position = TempParticle->Location + InterpFraction * EmitterDelta + SpawnInfo.StartTime * NewParticle->Velocity + EmitterInfo.OrbitOffsetBase + EmitterInfo.OrbitOffsetRange * RandomOrbit;
+ 			NewParticle->RelativeTime = TempParticle->RelativeTime;
+-			NewParticle->TimeScale = FMath::Max<float>(TempParticle->OneOverMaxLifetime, 0.001f);
++			NewParticle->TimeScale = (TempParticle->OneOverMaxLifetime > 0.f) ?
++				FMath::Max<float>(TempParticle->OneOverMaxLifetime, 0.001f) : 0.f;
+ 
+ 			//So here I'm reducing the size to 0-0.5 range and using < 0.5 to indicate flipped UVs.
+ 			FVector BaseSize = GetParticleBaseSize(*TempParticle, true);
+@@ -4122,7 +4123,8 @@ private:
+ 			SpawnInfo.StartTime -= SpawnInfo.Increment;
+ 
+ 			const float PrevTileTimeOfDeath = TileTimeOfDeath[AllocatedTileIndex];
+-			const float ParticleTimeOfDeath = SecondsSinceCreation + 1.0f / NewParticle->TimeScale;
++			const float ParticleTimeOfDeath = (NewParticle->TimeScale > 0) ?
++				SecondsSinceCreation + 1.0f / NewParticle->TimeScale : 0.f;
+ 			const float NewTileTimeOfDeath = FMath::Max(PrevTileTimeOfDeath, ParticleTimeOfDeath);
+ 			TileTimeOfDeath[AllocatedTileIndex] = NewTileTimeOfDeath;
+ 		}
