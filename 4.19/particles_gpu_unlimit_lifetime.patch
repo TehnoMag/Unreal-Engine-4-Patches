@@ -1,5 +1,5 @@
 diff Engine/Source/Runtime/Engine/Private/Particles/ParticleGpuSimulation.cpp Engine/Source/Runtime/Engine/Private/Particles/ParticleGpuSimulation.cpp
-index 2cdeea099fd..604b07d3606 100644
+index 2cdeea099fd..a90bc317fb1 100644
 --- Engine/Source/Runtime/Engine/Private/Particles/ParticleGpuSimulation.cpp
 +++ Engine/Source/Runtime/Engine/Private/Particles/ParticleGpuSimulation.cpp
 @@ -3776,7 +3776,7 @@ private:
@@ -11,7 +11,17 @@ index 2cdeea099fd..604b07d3606 100644
  			{
  				ActiveTiles.AccessCorrespondingBit(BitIt) = false;
  				if ( TileToAllocateFrom == BitIndex )
-@@ -4104,7 +4104,8 @@ private:
+@@ -4036,7 +4036,8 @@ private:
+ 			FNewParticle* Particle = InNewParticles + ParticleIndex;
+ 			Particle->Position += (Particle->Velocity + 0.5f * Acceleration * WarmupTime) * WarmupTime;
+ 			Particle->Velocity += Acceleration * WarmupTime;
+-			Particle->RelativeTime += Particle->TimeScale * WarmupTime;
++			Particle->RelativeTime += (Particle->TimeScale > 0.f) ?
++				Particle->TimeScale * WarmupTime : 0.001f * WarmupTime;
+ 		}
+ 	}
+ 
+@@ -4104,7 +4105,8 @@ private:
  			NewParticle->Velocity = TempParticle->BaseVelocity;
  			NewParticle->Position = TempParticle->Location + InterpFraction * EmitterDelta + SpawnInfo.StartTime * NewParticle->Velocity + EmitterInfo.OrbitOffsetBase + EmitterInfo.OrbitOffsetRange * RandomOrbit;
  			NewParticle->RelativeTime = TempParticle->RelativeTime;
@@ -21,7 +31,7 @@ index 2cdeea099fd..604b07d3606 100644
  
  			//So here I'm reducing the size to 0-0.5 range and using < 0.5 to indicate flipped UVs.
  			FVector BaseSize = GetParticleBaseSize(*TempParticle, true);
-@@ -4122,7 +4123,8 @@ private:
+@@ -4122,7 +4124,8 @@ private:
  			SpawnInfo.StartTime -= SpawnInfo.Increment;
  
  			const float PrevTileTimeOfDeath = TileTimeOfDeath[AllocatedTileIndex];
