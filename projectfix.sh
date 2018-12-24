@@ -1,11 +1,11 @@
 #!/bin/bash
 
 #Place Full Path to Engine Directory
-ENGINE_PATH="E\:\\\Unreal Engine 4\\\Engine\\\Engine"
+[ "$(uname)" == "Linux" ] && ENGINE_PATH="\/backup\/home\/UnrealEngine4\/Engine\/Engine" || ENGINE_PATH="E\:\\\Unreal Engine 4\\\Engine\\\Engine"
 #Place you project name
 PROJECT="MyProject"
 #Place you project module names with space as delimeter
-MODULES="Module1 Module 2"
+MODULES="Module1 Module2"
 PLATFORMS="Win64 Win32 Linux"
 
 echo $PROJECT
@@ -29,7 +29,7 @@ done
 
 for platform in `echo $PLATFORMS`;
 do
-	[ "$(uname)" == "Linux" ] && plat_id="\/${PLATFORM_ID}\/" || plat_id=""
+	[ "$(uname)" == "Linux" ] && plat_id="\/${PLATFORM_ID}\/" || plat_id="\/"
 
 	echo "Fixing Path for platoform ${platform}"
 	sed -i "s/\.\.\\\Build\\\\${platform}\\\\${PROJECT}Editor/${ENGINE_PATH}\\\Intermediate\\\Build\\\\${platform}\\\UE4Editor/g ${PRJFILE}" 2>/dev/null
