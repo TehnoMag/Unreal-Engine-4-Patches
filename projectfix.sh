@@ -13,7 +13,7 @@ echo $ENGINE_PATH
 
 #for Linux host found platform ID in Intermeidate directory
 PLATFORM_ID=$(ls Intermediate/Build/Linux/ | grep -v Editor)
-echo $PLATFROM_ID
+echo $PLATFORM_ID
 
 #STEP1 Fixing Includes Search paths for generated files (Engine Issue)
 
