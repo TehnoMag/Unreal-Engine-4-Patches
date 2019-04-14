@@ -1,0 +1,15 @@
+diff --git a/Engine/Source/Runtime/Engine/Private/PhysicsEngine/PhysicsReplication.cpp b/Engine/Source/Runtime/Engine/Private/PhysicsEngine/PhysicsReplication.cpp
+index eb5d916d6e0..9afa0d66f01 100644
+--- a/Engine/Source/Runtime/Engine/Private/PhysicsEngine/PhysicsReplication.cpp
++++ b/Engine/Source/Runtime/Engine/Private/PhysicsEngine/PhysicsReplication.cpp
+@@ -385,7 +385,9 @@ void FPhysicsReplication::OnTick(float DeltaSeconds, TMap<TWeakObjectPtr<UPrimit
+ 				{
+ 					const bool bIsSimulated = OwningActor->Role == ROLE_SimulatedProxy;
+ 					const bool bIsReplicatedAutonomous = OwningActor->Role == ROLE_AutonomousProxy && PrimComp->bReplicatePhysicsToAutonomousProxy;
+-					if (bIsSimulated || bIsReplicatedAutonomous)
++					const bool bIsReplicatedByState = (Cast<APawn>(OwningActor) && Cast<APawn>(OwningActor)->GetPlayerState()
++						&& Cast<APawn>(OwningActor)->GetPlayerState()->Role == ROLE_SimulatedProxy);
++					if (bIsSimulated || bIsReplicatedAutonomous || bIsReplicatedByState)
+ 					{
+ 						// Get the ping of the guy who owns this thing. If nobody is,
+ 						// then it's server authoritative.
