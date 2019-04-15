@@ -1,8 +1,7 @@
-diff --git a/Engine/Source/Runtime/Engine/Private/PhysicsEngine/PhysicsReplication.cpp b/Engine/Source/Runtime/Engine/Private/PhysicsEngine/PhysicsReplication.cpp
-index eb5d916d6e0..9afa0d66f01 100644
---- a/Engine/Source/Runtime/Engine/Private/PhysicsEngine/PhysicsReplication.cpp
-+++ b/Engine/Source/Runtime/Engine/Private/PhysicsEngine/PhysicsReplication.cpp
-@@ -385,7 +385,9 @@ void FPhysicsReplication::OnTick(float DeltaSeconds, TMap<TWeakObjectPtr<UPrimit
+diff Engine/Source/Runtime/Engine/Private/PhysicsEngine/PhysicsReplication.cpp Engine/Source/Runtime/Engine/Private/PhysicsEngine/PhysicsReplication.cpp
+--- Engine/Source/Runtime/Engine/Private/PhysicsEngine/PhysicsReplication.cpp	2019-04-15 10:44:50.631583794 +0300
++++ Engine/Source/Runtime/Engine/Private/PhysicsEngine/PhysicsReplication.cpp	2019-04-15 10:44:18.635709553 +0300
+@@ -385,7 +385,9 @@
  				{
  					const bool bIsSimulated = OwningActor->Role == ROLE_SimulatedProxy;
  					const bool bIsReplicatedAutonomous = OwningActor->Role == ROLE_AutonomousProxy && PrimComp->bReplicatePhysicsToAutonomousProxy;
