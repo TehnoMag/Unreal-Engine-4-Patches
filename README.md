@@ -7,3 +7,7 @@ This patch add ability to unlimit gpu particle lifetime in cascade particle syst
 ## collision_layer_feature.patch
 
 This patch add addition abstraction to collision query system and gain ability to group objects by abstract layers. Layer is a top level abstraction in the query.
+
+## UserEngine-ini.patch
+
+Hotfix for https://issues.unrealengine.com/issue/UE-58013
