@@ -1,4 +1,5 @@
---- Patch/Source/Runtime/Core/Private/Misc/ConfigCacheIni.cpp	2020-02-27 23:06:17.214837800 +0300
+diff Engine/Source/Runtime/Core/Private/Misc/ConfigCacheIni.cpp Engine/Source/Runtime/Core/Private/Misc/ConfigCacheIni.cpp
+--- Engine/Source/Runtime/Core/Private/Misc/ConfigCacheIni.cpp	2020-02-27 23:06:17.214837800 +0300
 +++ Engine/Source/Runtime/Core/Private/Misc/ConfigCacheIni.cpp	2020-02-27 23:39:21.668351300 +0300
 @@ -518,11 +518,12 @@
  	{ TEXT("EnginePlatform"),			TEXT("{ENGINE}{ED}{PLATFORM}/{EF}{PLATFORM}{TYPE}.ini"), TEXT("{EXTENGINE}/{ED}{EF}{PLATFORM}{TYPE}.ini") },

@@ -233,15 +233,15 @@ diff -ruN Engine/Source/Runtime/Engine/Classes/Kismet/KismetSystemLibrary.h Engi
 diff -ruN Engine/Source/Runtime/Engine/Private/Collision/Collision.cpp Engine/Source/Runtime/Engine/Private/Collision/Collision.cpp
 --- Engine/Source/Runtime/Engine/Private/Collision/Collision.cpp	2019-12-01 14:19:48.856476300 +0300
 +++ Engine/Source/Runtime/Engine/Private/Collision/Collision.cpp	2019-12-01 14:12:41.874764100 +0300
-@@ -178,6 +178,8 @@
- 	{
+@@ -179,6 +178,8 @@
  		OwnerTag = InIgnoreActor->GetFName();
  	}
-+
+ 
 +	Layer = 0;
- }
- 
- 
++
+ #if !(UE_BUILD_TEST || UE_BUILD_SHIPPING)
+ 		bDebugQuery = false;
+ #endif
 @@ -308,6 +310,11 @@
  	}
  }
