@@ -1,0 +1,17 @@
+diff Engine/Source/Runtime/Core/Private/Misc/ConfigCacheIni.cpp Engine/Source/Runtime/Core/Private/Misc/ConfigCacheIni.cpp
+--- Engine/Source/Runtime/Core/Private/Misc/ConfigCacheIni.cpp	2020-02-27 23:06:17.214837800 +0300
++++ Engine/Source/Runtime/Core/Private/Misc/ConfigCacheIni.cpp	2020-02-27 23:39:21.668351300 +0300
+@@ -518,11 +518,12 @@
+ 	{ TEXT("EnginePlatform"),			TEXT("{ENGINE}{ED}{PLATFORM}/{EF}{PLATFORM}{TYPE}.ini"), TEXT("{EXTENGINE}/{ED}{EF}{PLATFORM}{TYPE}.ini") },
+ 	// Project/Platform/Platform*.ini
+ 	{ TEXT("ProjectPlatform"),			TEXT("{PROJECT}{ED}{PLATFORM}/{EF}{PLATFORM}{TYPE}.ini"), TEXT("{EXTPROJECT}/{ED}{EF}{PLATFORM}{TYPE}.ini") },
+-	
++#if (WITH_EDITOR || IS_PROGRAM)
+ 	// UserSettings/.../User*.ini
+ 	{ TEXT("UserSettingsDir"),			TEXT("{USERSETTINGS}Unreal Engine/Engine/Config/User{TYPE}.ini") },
+ 	// UserDir/.../User*.ini
+ 	{ TEXT("UserDir"),					TEXT("{USER}Unreal Engine/Engine/Config/User{TYPE}.ini") },
++#endif
+ 	// Project/User*.ini
+ 	{ TEXT("GameDirUser"),				TEXT("{PROJECT}User{TYPE}.ini"), TEXT(""), EConfigLayerFlags::GenerateCacheKey },
+ };
