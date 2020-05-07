@@ -1,0 +1,798 @@
+diff -ruN Engine/Source/Runtime/Engine/Classes/GameFramework/Actor.h Engine/Source/Runtime/Engine/Classes/GameFramework/Actor.h
+--- Engine/Source/Runtime/Engine/Classes/GameFramework/Actor.h	2019-12-01 14:19:48.855475800 +0300
++++ Engine/Source/Runtime/Engine/Classes/GameFramework/Actor.h	2019-12-01 14:12:41.872763300 +0300
+@@ -209,6 +209,9 @@
+ 	UPROPERTY(EditAnywhere, Category=Collision, AdvancedDisplay)
+ 	uint8 bRelevantForLevelBounds:1;
+ 
++	UPROPERTY(EditAnywhere, Category = Collision, AdvancedDisplay, Meta = (UIMin = "0", ClampMin = "0"))
++	uint32 CollisionLayer;
++
+ 	/**
+ 	 * If true, this actor will only be destroyed during scrubbing if the replay is set to a time before the actor existed.
+ 	 * Otherwise, RewindForReplay will be called if we detect the actor needs to be reset.
+diff -ruN Engine/Source/Runtime/Engine/Classes/Kismet/KismetSystemLibrary.h Engine/Source/Runtime/Engine/Classes/Kismet/KismetSystemLibrary.h
+--- Engine/Source/Runtime/Engine/Classes/Kismet/KismetSystemLibrary.h	2019-12-01 14:18:54.045037400 +0300
++++ Engine/Source/Runtime/Engine/Classes/Kismet/KismetSystemLibrary.h	2019-12-01 14:12:41.873763400 +0300
+@@ -959,7 +959,7 @@
+ 	 * @return				True if there was a hit, false otherwise.
+ 	 */
+ 	UFUNCTION(BlueprintCallable, Category="Collision", meta=(bIgnoreSelf="true", WorldContext="WorldContextObject", AutoCreateRefTerm="ActorsToIgnore", DisplayName="LineTraceByChannel", AdvancedDisplay="TraceColor,TraceHitColor,DrawTime", Keywords="raycast"))
+-	static bool LineTraceSingle(UObject* WorldContextObject, const FVector Start, const FVector End, ETraceTypeQuery TraceChannel, bool bTraceComplex, const TArray<AActor*>& ActorsToIgnore, EDrawDebugTrace::Type DrawDebugType, FHitResult& OutHit, bool bIgnoreSelf, FLinearColor TraceColor = FLinearColor::Red, FLinearColor TraceHitColor = FLinearColor::Green, float DrawTime = 5.0f);
++	static bool LineTraceSingle(UObject* WorldContextObject, const FVector Start, const FVector End, const int32 TraceLayer, ETraceTypeQuery TraceChannel, bool bTraceComplex, const TArray<AActor*>& ActorsToIgnore, EDrawDebugTrace::Type DrawDebugType, FHitResult& OutHit, bool bIgnoreSelf, FLinearColor TraceColor = FLinearColor::Red, FLinearColor TraceHitColor = FLinearColor::Green, float DrawTime = 5.0f);
+ 	
+ 	/**
+ 	 * Does a collision trace along the given line and returns all hits encountered up to and including the first blocking hit.
+@@ -974,7 +974,7 @@
+ 	 * @return				True if there was a blocking hit, false otherwise.
+ 	 */
+ 	UFUNCTION(BlueprintCallable, Category="Collision", meta=(bIgnoreSelf="true", WorldContext="WorldContextObject", AutoCreateRefTerm="ActorsToIgnore", DisplayName = "MultiLineTraceByChannel", AdvancedDisplay="TraceColor,TraceHitColor,DrawTime", Keywords="raycast"))
+-	static bool LineTraceMulti(UObject* WorldContextObject, const FVector Start, const FVector End, ETraceTypeQuery TraceChannel, bool bTraceComplex, const TArray<AActor*>& ActorsToIgnore, EDrawDebugTrace::Type DrawDebugType, TArray<FHitResult>& OutHits, bool bIgnoreSelf, FLinearColor TraceColor = FLinearColor::Red, FLinearColor TraceHitColor = FLinearColor::Green, float DrawTime = 5.0f);
++	static bool LineTraceMulti(UObject* WorldContextObject, const FVector Start, const FVector End, const int32 TraceLayer, ETraceTypeQuery TraceChannel, bool bTraceComplex, const TArray<AActor*>& ActorsToIgnore, EDrawDebugTrace::Type DrawDebugType, TArray<FHitResult>& OutHits, bool bIgnoreSelf, FLinearColor TraceColor = FLinearColor::Red, FLinearColor TraceHitColor = FLinearColor::Green, float DrawTime = 5.0f);
+ 
+ 	/**
+ 	 * Sweeps a sphere along the given line and returns the first blocking hit encountered.
+@@ -989,7 +989,7 @@
+ 	 * @return				True if there was a hit, false otherwise.
+ 	 */
+ 	UFUNCTION(BlueprintCallable, Category="Collision", meta=(bIgnoreSelf="true", WorldContext="WorldContextObject", AutoCreateRefTerm="ActorsToIgnore", DisplayName = "SphereTraceByChannel", AdvancedDisplay="TraceColor,TraceHitColor,DrawTime", Keywords="sweep"))
+-	static bool SphereTraceSingle(UObject* WorldContextObject, const FVector Start, const FVector End, float Radius, ETraceTypeQuery TraceChannel, bool bTraceComplex, const TArray<AActor*>& ActorsToIgnore, EDrawDebugTrace::Type DrawDebugType, FHitResult& OutHit, bool bIgnoreSelf, FLinearColor TraceColor = FLinearColor::Red, FLinearColor TraceHitColor = FLinearColor::Green, float DrawTime = 5.0f);
++	static bool SphereTraceSingle(UObject* WorldContextObject, const FVector Start, const FVector End, float Radius, const int32 TraceLayer, ETraceTypeQuery TraceChannel, bool bTraceComplex, const TArray<AActor*>& ActorsToIgnore, EDrawDebugTrace::Type DrawDebugType, FHitResult& OutHit, bool bIgnoreSelf, FLinearColor TraceColor = FLinearColor::Red, FLinearColor TraceHitColor = FLinearColor::Green, float DrawTime = 5.0f);
+ 
+ 	/**
+ 	 * Sweeps a sphere along the given line and returns all hits encountered up to and including the first blocking hit.
+@@ -1005,7 +1005,7 @@
+ 	 * @return				True if there was a blocking hit, false otherwise.
+ 	 */
+ 	UFUNCTION(BlueprintCallable, Category="Collision", meta=(bIgnoreSelf="true", WorldContext="WorldContextObject", AutoCreateRefTerm="ActorsToIgnore", DisplayName = "MultiSphereTraceByChannel", AdvancedDisplay="TraceColor,TraceHitColor,DrawTime", Keywords="sweep"))
+-	static bool SphereTraceMulti(UObject* WorldContextObject, const FVector Start, const FVector End, float Radius, ETraceTypeQuery TraceChannel, bool bTraceComplex, const TArray<AActor*>& ActorsToIgnore, EDrawDebugTrace::Type DrawDebugType, TArray<FHitResult>& OutHits, bool bIgnoreSelf, FLinearColor TraceColor = FLinearColor::Red, FLinearColor TraceHitColor = FLinearColor::Green, float DrawTime = 5.0f);
++	static bool SphereTraceMulti(UObject* WorldContextObject, const FVector Start, const FVector End, float Radius, const int32 TraceLayer, ETraceTypeQuery TraceChannel, bool bTraceComplex, const TArray<AActor*>& ActorsToIgnore, EDrawDebugTrace::Type DrawDebugType, TArray<FHitResult>& OutHits, bool bIgnoreSelf, FLinearColor TraceColor = FLinearColor::Red, FLinearColor TraceHitColor = FLinearColor::Green, float DrawTime = 5.0f);
+ 
+ 	/**
+ 	* Sweeps a box along the given line and returns the first blocking hit encountered.
+@@ -1021,7 +1021,7 @@
+ 	* @return				True if there was a hit, false otherwise.
+ 	*/
+ 	UFUNCTION(BlueprintCallable, Category = "Collision", meta = (bIgnoreSelf = "true", WorldContext="WorldContextObject", AutoCreateRefTerm = "ActorsToIgnore", DisplayName = "BoxTraceByChannel", AdvancedDisplay="TraceColor,TraceHitColor,DrawTime", Keywords="sweep"))
+-	static bool BoxTraceSingle(UObject* WorldContextObject, const FVector Start, const FVector End, const FVector HalfSize, const FRotator Orientation, ETraceTypeQuery TraceChannel, bool bTraceComplex, const TArray<AActor*>& ActorsToIgnore, EDrawDebugTrace::Type DrawDebugType, FHitResult& OutHit, bool bIgnoreSelf, FLinearColor TraceColor = FLinearColor::Red, FLinearColor TraceHitColor = FLinearColor::Green, float DrawTime = 5.0f);
++	static bool BoxTraceSingle(UObject* WorldContextObject, const FVector Start, const FVector End, const FVector HalfSize, const FRotator Orientation, const int32 TraceLayer, ETraceTypeQuery TraceChannel, bool bTraceComplex, const TArray<AActor*>& ActorsToIgnore, EDrawDebugTrace::Type DrawDebugType, FHitResult& OutHit, bool bIgnoreSelf, FLinearColor TraceColor = FLinearColor::Red, FLinearColor TraceHitColor = FLinearColor::Green, float DrawTime = 5.0f);
+ 
+ 	/**
+ 	* Sweeps a box along the given line and returns all hits encountered.
+@@ -1037,7 +1037,7 @@
+ 	* @return				True if there was a blocking hit, false otherwise.
+ 	*/
+ 	UFUNCTION(BlueprintCallable, Category = "Collision", meta = (bIgnoreSelf = "true", WorldContext="WorldContextObject", AutoCreateRefTerm = "ActorsToIgnore", DisplayName = "MultiBoxTraceByChannel", AdvancedDisplay="TraceColor,TraceHitColor,DrawTime", Keywords="sweep"))
+-	static bool BoxTraceMulti(UObject* WorldContextObject, const FVector Start, const FVector End, FVector HalfSize, const FRotator Orientation, ETraceTypeQuery TraceChannel, bool bTraceComplex, const TArray<AActor*>& ActorsToIgnore, EDrawDebugTrace::Type DrawDebugType, TArray<FHitResult>& OutHits, bool bIgnoreSelf, FLinearColor TraceColor = FLinearColor::Red, FLinearColor TraceHitColor = FLinearColor::Green, float DrawTime = 5.0f);
++	static bool BoxTraceMulti(UObject* WorldContextObject, const FVector Start, const FVector End, FVector HalfSize, const FRotator Orientation, const int32 TraceLayer, ETraceTypeQuery TraceChannel, bool bTraceComplex, const TArray<AActor*>& ActorsToIgnore, EDrawDebugTrace::Type DrawDebugType, TArray<FHitResult>& OutHits, bool bIgnoreSelf, FLinearColor TraceColor = FLinearColor::Red, FLinearColor TraceHitColor = FLinearColor::Green, float DrawTime = 5.0f);
+ 
+ 	
+ 	/**
+@@ -1055,7 +1055,7 @@
+ 	 * @return				True if there was a hit, false otherwise.
+ 	 */
+ 	UFUNCTION(BlueprintCallable, Category="Collision", meta=(bIgnoreSelf="true", WorldContext="WorldContextObject", AutoCreateRefTerm="ActorsToIgnore", DisplayName = "CapsuleTraceByChannel", AdvancedDisplay="TraceColor,TraceHitColor,DrawTime", Keywords="sweep"))
+-	static bool CapsuleTraceSingle(UObject* WorldContextObject, const FVector Start, const FVector End, float Radius, float HalfHeight, ETraceTypeQuery TraceChannel, bool bTraceComplex, const TArray<AActor*>& ActorsToIgnore, EDrawDebugTrace::Type DrawDebugType, FHitResult& OutHit, bool bIgnoreSelf, FLinearColor TraceColor = FLinearColor::Red, FLinearColor TraceHitColor = FLinearColor::Green, float DrawTime = 5.0f);
++	static bool CapsuleTraceSingle(UObject* WorldContextObject, const FVector Start, const FVector End, float Radius, float HalfHeight, const int32 TraceLayer, ETraceTypeQuery TraceChannel, bool bTraceComplex, const TArray<AActor*>& ActorsToIgnore, EDrawDebugTrace::Type DrawDebugType, FHitResult& OutHit, bool bIgnoreSelf, FLinearColor TraceColor = FLinearColor::Red, FLinearColor TraceHitColor = FLinearColor::Green, float DrawTime = 5.0f);
+ 
+ 	/**
+ 	 * Sweeps a capsule along the given line and returns all hits encountered up to and including the first blocking hit.
+@@ -1072,7 +1072,7 @@
+ 	 * @return				True if there was a blocking hit, false otherwise.
+ 	 */
+ 	UFUNCTION(BlueprintCallable, Category="Collision", meta=(bIgnoreSelf="true", WorldContext="WorldContextObject", AutoCreateRefTerm="ActorsToIgnore", DisplayName = "MultiCapsuleTraceByChannel", AdvancedDisplay="TraceColor,TraceHitColor,DrawTime", Keywords="sweep"))
+-	static bool CapsuleTraceMulti(UObject* WorldContextObject, const FVector Start, const FVector End, float Radius, float HalfHeight, ETraceTypeQuery TraceChannel, bool bTraceComplex, const TArray<AActor*>& ActorsToIgnore, EDrawDebugTrace::Type DrawDebugType, TArray<FHitResult>& OutHits, bool bIgnoreSelf, FLinearColor TraceColor = FLinearColor::Red, FLinearColor TraceHitColor = FLinearColor::Green, float DrawTime = 5.0f);
++	static bool CapsuleTraceMulti(UObject* WorldContextObject, const FVector Start, const FVector End, float Radius, float HalfHeight, const int32 TraceLayer, ETraceTypeQuery TraceChannel, bool bTraceComplex, const TArray<AActor*>& ActorsToIgnore, EDrawDebugTrace::Type DrawDebugType, TArray<FHitResult>& OutHits, bool bIgnoreSelf, FLinearColor TraceColor = FLinearColor::Red, FLinearColor TraceHitColor = FLinearColor::Green, float DrawTime = 5.0f);
+ 
+ 	/**
+ 	 * Does a collision trace along the given line and returns the first hit encountered.
+@@ -1087,7 +1087,7 @@
+ 	 * @return				True if there was a hit, false otherwise.
+ 	 */
+ 	UFUNCTION(BlueprintCallable, Category="Collision", meta=(bIgnoreSelf="true", WorldContext="WorldContextObject", AutoCreateRefTerm="ActorsToIgnore", DisplayName = "LineTraceForObjects", AdvancedDisplay="TraceColor,TraceHitColor,DrawTime", Keywords="raycast"))
+-	static bool LineTraceSingleForObjects(UObject* WorldContextObject, const FVector Start, const FVector End, const TArray<TEnumAsByte<EObjectTypeQuery> > & ObjectTypes, bool bTraceComplex, const TArray<AActor*>& ActorsToIgnore, EDrawDebugTrace::Type DrawDebugType, FHitResult& OutHit, bool bIgnoreSelf, FLinearColor TraceColor = FLinearColor::Red, FLinearColor TraceHitColor = FLinearColor::Green, float DrawTime = 5.0f );
++	static bool LineTraceSingleForObjects(UObject* WorldContextObject, const FVector Start, const FVector End, const TArray<TEnumAsByte<EObjectTypeQuery> > & ObjectTypes, const int32 TraceLayer, bool bTraceComplex, const TArray<AActor*>& ActorsToIgnore, EDrawDebugTrace::Type DrawDebugType, FHitResult& OutHit, bool bIgnoreSelf, FLinearColor TraceColor = FLinearColor::Red, FLinearColor TraceHitColor = FLinearColor::Green, float DrawTime = 5.0f );
+ 	
+ 	/**
+ 	 * Does a collision trace along the given line and returns all hits encountered.
+@@ -1102,7 +1102,7 @@
+ 	 * @return				True if there was a hit, false otherwise.
+ 	 */
+ 	UFUNCTION(BlueprintCallable, Category="Collision", meta=(bIgnoreSelf="true", WorldContext="WorldContextObject", AutoCreateRefTerm="ActorsToIgnore", DisplayName = "MultiLineTraceForObjects", AdvancedDisplay="TraceColor,TraceHitColor,DrawTime", Keywords="raycast"))
+-	static bool LineTraceMultiForObjects(UObject* WorldContextObject, const FVector Start, const FVector End, const TArray<TEnumAsByte<EObjectTypeQuery> > & ObjectTypes, bool bTraceComplex, const TArray<AActor*>& ActorsToIgnore, EDrawDebugTrace::Type DrawDebugType, TArray<FHitResult>& OutHits, bool bIgnoreSelf, FLinearColor TraceColor = FLinearColor::Red, FLinearColor TraceHitColor = FLinearColor::Green, float DrawTime = 5.0f);
++	static bool LineTraceMultiForObjects(UObject* WorldContextObject, const FVector Start, const FVector End, const TArray<TEnumAsByte<EObjectTypeQuery> > & ObjectTypes, const int32 TraceLayer, bool bTraceComplex, const TArray<AActor*>& ActorsToIgnore, EDrawDebugTrace::Type DrawDebugType, TArray<FHitResult>& OutHits, bool bIgnoreSelf, FLinearColor TraceColor = FLinearColor::Red, FLinearColor TraceHitColor = FLinearColor::Green, float DrawTime = 5.0f);
+ 
+ 	/**
+ 	 * Sweeps a sphere along the given line and returns the first hit encountered.
+@@ -1117,7 +1117,7 @@
+ 	 * @return				True if there was a hit, false otherwise.
+ 	 */
+ 	UFUNCTION(BlueprintCallable, Category="Collision", meta=(bIgnoreSelf="true", WorldContext="WorldContextObject", AutoCreateRefTerm="ActorsToIgnore", DisplayName = "SphereTraceForObjects", AdvancedDisplay="TraceColor,TraceHitColor,DrawTime", Keywords="sweep"))
+-	static bool SphereTraceSingleForObjects(UObject* WorldContextObject, const FVector Start, const FVector End, float Radius, const TArray<TEnumAsByte<EObjectTypeQuery> > & ObjectTypes, bool bTraceComplex, const TArray<AActor*>& ActorsToIgnore, EDrawDebugTrace::Type DrawDebugType, FHitResult& OutHit, bool bIgnoreSelf, FLinearColor TraceColor = FLinearColor::Red, FLinearColor TraceHitColor = FLinearColor::Green, float DrawTime = 5.0f);
++	static bool SphereTraceSingleForObjects(UObject* WorldContextObject, const FVector Start, const FVector End, float Radius, const TArray<TEnumAsByte<EObjectTypeQuery> > & ObjectTypes, const int32 TraceLayer, bool bTraceComplex, const TArray<AActor*>& ActorsToIgnore, EDrawDebugTrace::Type DrawDebugType, FHitResult& OutHit, bool bIgnoreSelf, FLinearColor TraceColor = FLinearColor::Red, FLinearColor TraceHitColor = FLinearColor::Green, float DrawTime = 5.0f);
+ 
+ 	/**
+ 	 * Sweeps a sphere along the given line and returns all hits encountered.
+@@ -1133,7 +1133,7 @@
+ 	 * @return				True if there was a hit, false otherwise.
+ 	 */
+ 	UFUNCTION(BlueprintCallable, Category="Collision", meta=(bIgnoreSelf="true", WorldContext="WorldContextObject", AutoCreateRefTerm="ActorsToIgnore", DisplayName = "MultiSphereTraceForObjects", AdvancedDisplay="TraceColor,TraceHitColor,DrawTime", Keywords="sweep"))
+-	static bool SphereTraceMultiForObjects(UObject* WorldContextObject, const FVector Start, const FVector End, float Radius, const TArray<TEnumAsByte<EObjectTypeQuery> > & ObjectTypes, bool bTraceComplex, const TArray<AActor*>& ActorsToIgnore, EDrawDebugTrace::Type DrawDebugType, TArray<FHitResult>& OutHits, bool bIgnoreSelf, FLinearColor TraceColor = FLinearColor::Red, FLinearColor TraceHitColor = FLinearColor::Green, float DrawTime = 5.0f);
++	static bool SphereTraceMultiForObjects(UObject* WorldContextObject, const FVector Start, const FVector End, float Radius, const TArray<TEnumAsByte<EObjectTypeQuery> > & ObjectTypes, const int32 TraceLayer, bool bTraceComplex, const TArray<AActor*>& ActorsToIgnore, EDrawDebugTrace::Type DrawDebugType, TArray<FHitResult>& OutHits, bool bIgnoreSelf, FLinearColor TraceColor = FLinearColor::Red, FLinearColor TraceHitColor = FLinearColor::Green, float DrawTime = 5.0f);
+ 	
+ 
+ 	/**
+@@ -1150,7 +1150,7 @@
+ 	* @return				True if there was a hit, false otherwise.
+ 	*/
+ 	UFUNCTION(BlueprintCallable, Category = "Collision", meta = (bIgnoreSelf = "true", WorldContext="WorldContextObject", AutoCreateRefTerm = "ActorsToIgnore", DisplayName = "BoxTraceForObjects", AdvancedDisplay="TraceColor,TraceHitColor,DrawTime", Keywords="sweep"))
+-	static bool BoxTraceSingleForObjects(UObject* WorldContextObject, const FVector Start, const FVector End, const FVector HalfSize, const FRotator Orientation, const TArray<TEnumAsByte<EObjectTypeQuery> > & ObjectTypes, bool bTraceComplex, const TArray<AActor*>& ActorsToIgnore, EDrawDebugTrace::Type DrawDebugType, FHitResult& OutHit, bool bIgnoreSelf, FLinearColor TraceColor = FLinearColor::Red, FLinearColor TraceHitColor = FLinearColor::Green, float DrawTime = 5.0f);
++	static bool BoxTraceSingleForObjects(UObject* WorldContextObject, const FVector Start, const FVector End, const FVector HalfSize, const FRotator Orientation, const TArray<TEnumAsByte<EObjectTypeQuery> > & ObjectTypes, const int32 TraceLayer, bool bTraceComplex, const TArray<AActor*>& ActorsToIgnore, EDrawDebugTrace::Type DrawDebugType, FHitResult& OutHit, bool bIgnoreSelf, FLinearColor TraceColor = FLinearColor::Red, FLinearColor TraceHitColor = FLinearColor::Green, float DrawTime = 5.0f);
+ 
+ 
+ 	/**
+@@ -1167,7 +1167,7 @@
+ 	* @return				True if there was a hit, false otherwise.
+ 	*/
+ 	UFUNCTION(BlueprintCallable, Category = "Collision", meta = (bIgnoreSelf = "true", WorldContext="WorldContextObject", AutoCreateRefTerm = "ActorsToIgnore", DisplayName = "MultiBoxTraceForObjects", AdvancedDisplay="TraceColor,TraceHitColor,DrawTime", Keywords="sweep"))
+-	static bool BoxTraceMultiForObjects(UObject* WorldContextObject, const FVector Start, const FVector End, const FVector HalfSize, const FRotator Orientation, const TArray<TEnumAsByte<EObjectTypeQuery> > & ObjectTypes, bool bTraceComplex, const TArray<AActor*>& ActorsToIgnore, EDrawDebugTrace::Type DrawDebugType, TArray<FHitResult>& OutHits, bool bIgnoreSelf, FLinearColor TraceColor = FLinearColor::Red, FLinearColor TraceHitColor = FLinearColor::Green, float DrawTime = 5.0f);
++	static bool BoxTraceMultiForObjects(UObject* WorldContextObject, const FVector Start, const FVector End, const FVector HalfSize, const FRotator Orientation, const TArray<TEnumAsByte<EObjectTypeQuery> > & ObjectTypes, const int32 TraceLayer, bool bTraceComplex, const TArray<AActor*>& ActorsToIgnore, EDrawDebugTrace::Type DrawDebugType, TArray<FHitResult>& OutHits, bool bIgnoreSelf, FLinearColor TraceColor = FLinearColor::Red, FLinearColor TraceHitColor = FLinearColor::Green, float DrawTime = 5.0f);
+ 
+ 	/**
+ 	 * Sweeps a capsule along the given line and returns the first hit encountered.
+@@ -1184,7 +1184,7 @@
+ 	 * @return				True if there was a hit, false otherwise.
+ 	 */
+ 	UFUNCTION(BlueprintCallable, Category="Collision", meta=(bIgnoreSelf="true", WorldContext="WorldContextObject", AutoCreateRefTerm="ActorsToIgnore", DisplayName = "CapsuleTraceForObjects", AdvancedDisplay="TraceColor,TraceHitColor,DrawTime", Keywords="sweep"))
+-	static bool CapsuleTraceSingleForObjects(UObject* WorldContextObject, const FVector Start, const FVector End, float Radius, float HalfHeight, const TArray<TEnumAsByte<EObjectTypeQuery> > & ObjectTypes, bool bTraceComplex, const TArray<AActor*>& ActorsToIgnore, EDrawDebugTrace::Type DrawDebugType, FHitResult& OutHit, bool bIgnoreSelf, FLinearColor TraceColor = FLinearColor::Red, FLinearColor TraceHitColor = FLinearColor::Green, float DrawTime = 5.0f);
++	static bool CapsuleTraceSingleForObjects(UObject* WorldContextObject, const FVector Start, const FVector End, float Radius, float HalfHeight, const TArray<TEnumAsByte<EObjectTypeQuery> > & ObjectTypes, const int32 TraceLayer, bool bTraceComplex, const TArray<AActor*>& ActorsToIgnore, EDrawDebugTrace::Type DrawDebugType, FHitResult& OutHit, bool bIgnoreSelf, FLinearColor TraceColor = FLinearColor::Red, FLinearColor TraceHitColor = FLinearColor::Green, float DrawTime = 5.0f);
+ 
+ 	/**
+ 	 * Sweeps a capsule along the given line and returns all hits encountered.
+@@ -1201,7 +1201,7 @@
+ 	 * @return				True if there was a hit, false otherwise.
+ 	 */
+ 	UFUNCTION(BlueprintCallable, Category="Collision", meta=(bIgnoreSelf="true", WorldContext="WorldContextObject", AutoCreateRefTerm="ActorsToIgnore", DisplayName = "MultiCapsuleTraceForObjects", AdvancedDisplay="TraceColor,TraceHitColor,DrawTime", Keywords="sweep"))
+-	static bool CapsuleTraceMultiForObjects(UObject* WorldContextObject, const FVector Start, const FVector End, float Radius, float HalfHeight, const TArray<TEnumAsByte<EObjectTypeQuery> > & ObjectTypes, bool bTraceComplex, const TArray<AActor*>& ActorsToIgnore, EDrawDebugTrace::Type DrawDebugType, TArray<FHitResult>& OutHits, bool bIgnoreSelf, FLinearColor TraceColor = FLinearColor::Red, FLinearColor TraceHitColor = FLinearColor::Green, float DrawTime = 5.0f);
++	static bool CapsuleTraceMultiForObjects(UObject* WorldContextObject, const FVector Start, const FVector End, float Radius, float HalfHeight, const TArray<TEnumAsByte<EObjectTypeQuery> > & ObjectTypes, const int32 TraceLayer, bool bTraceComplex, const TArray<AActor*>& ActorsToIgnore, EDrawDebugTrace::Type DrawDebugType, TArray<FHitResult>& OutHits, bool bIgnoreSelf, FLinearColor TraceColor = FLinearColor::Red, FLinearColor TraceHitColor = FLinearColor::Green, float DrawTime = 5.0f);
+ 
+ 	// BY PROFILE
+ 
+@@ -1217,7 +1217,7 @@
+ 	* @return				True if there was a hit, false otherwise.
+ 	*/
+ 	UFUNCTION(BlueprintCallable, Category = "Collision", meta = (bIgnoreSelf = "true", WorldContext = "WorldContextObject", AutoCreateRefTerm = "ActorsToIgnore", DisplayName = "LineTraceByProfile", AdvancedDisplay = "TraceColor,TraceHitColor,DrawTime", Keywords = "raycast"))
+-	static bool LineTraceSingleByProfile(UObject* WorldContextObject, const FVector Start, const FVector End, FName ProfileName, bool bTraceComplex, const TArray<AActor*>& ActorsToIgnore, EDrawDebugTrace::Type DrawDebugType, FHitResult& OutHit, bool bIgnoreSelf, FLinearColor TraceColor = FLinearColor::Red, FLinearColor TraceHitColor = FLinearColor::Green, float DrawTime = 5.0f);
++	static bool LineTraceSingleByProfile(UObject* WorldContextObject, const FVector Start, const FVector End, FName ProfileName, const int32 TraceLayer, bool bTraceComplex, const TArray<AActor*>& ActorsToIgnore, EDrawDebugTrace::Type DrawDebugType, FHitResult& OutHit, bool bIgnoreSelf, FLinearColor TraceColor = FLinearColor::Red, FLinearColor TraceHitColor = FLinearColor::Green, float DrawTime = 5.0f);
+ 
+ 	/**
+ 	*  Trace a ray against the world using a specific profile and return overlapping hits and then first blocking hit
+@@ -1233,7 +1233,7 @@
+ 	* @return				True if there was a blocking hit, false otherwise.
+ 	*/
+ 	UFUNCTION(BlueprintCallable, Category = "Collision", meta = (bIgnoreSelf = "true", WorldContext = "WorldContextObject", AutoCreateRefTerm = "ActorsToIgnore", DisplayName = "MultiLineTraceByProfile", AdvancedDisplay = "TraceColor,TraceHitColor,DrawTime", Keywords = "raycast"))
+-	static bool LineTraceMultiByProfile(UObject* WorldContextObject, const FVector Start, const FVector End, FName ProfileName, bool bTraceComplex, const TArray<AActor*>& ActorsToIgnore, EDrawDebugTrace::Type DrawDebugType, TArray<FHitResult>& OutHits, bool bIgnoreSelf, FLinearColor TraceColor = FLinearColor::Red, FLinearColor TraceHitColor = FLinearColor::Green, float DrawTime = 5.0f);
++	static bool LineTraceMultiByProfile(UObject* WorldContextObject, const FVector Start, const FVector End, FName ProfileName, const int32 TraceLayer, bool bTraceComplex, const TArray<AActor*>& ActorsToIgnore, EDrawDebugTrace::Type DrawDebugType, TArray<FHitResult>& OutHits, bool bIgnoreSelf, FLinearColor TraceColor = FLinearColor::Red, FLinearColor TraceHitColor = FLinearColor::Green, float DrawTime = 5.0f);
+ 
+ 	/**
+ 	*  Sweep a sphere against the world and return the first blocking hit using a specific profile
+@@ -1247,7 +1247,7 @@
+ 	* @return				True if there was a hit, false otherwise.
+ 	*/
+ 	UFUNCTION(BlueprintCallable, Category = "Collision", meta = (bIgnoreSelf = "true", WorldContext = "WorldContextObject", AutoCreateRefTerm = "ActorsToIgnore", DisplayName = "SphereTraceByProfile", AdvancedDisplay = "TraceColor,TraceHitColor,DrawTime", Keywords = "sweep"))
+-	static bool SphereTraceSingleByProfile(UObject* WorldContextObject, const FVector Start, const FVector End, float Radius, FName ProfileName, bool bTraceComplex, const TArray<AActor*>& ActorsToIgnore, EDrawDebugTrace::Type DrawDebugType, FHitResult& OutHit, bool bIgnoreSelf, FLinearColor TraceColor = FLinearColor::Red, FLinearColor TraceHitColor = FLinearColor::Green, float DrawTime = 5.0f);
++	static bool SphereTraceSingleByProfile(UObject* WorldContextObject, const FVector Start, const FVector End, float Radius, FName ProfileName, const int32 TraceLayer, bool bTraceComplex, const TArray<AActor*>& ActorsToIgnore, EDrawDebugTrace::Type DrawDebugType, FHitResult& OutHit, bool bIgnoreSelf, FLinearColor TraceColor = FLinearColor::Red, FLinearColor TraceHitColor = FLinearColor::Green, float DrawTime = 5.0f);
+ 
+ 	/**
+ 	*  Sweep a sphere against the world and return all initial overlaps using a specific profile, then overlapping hits and then first blocking hit
+@@ -1264,7 +1264,7 @@
+ 	* @return				True if there was a blocking hit, false otherwise.
+ 	*/
+ 	UFUNCTION(BlueprintCallable, Category = "Collision", meta = (bIgnoreSelf = "true", WorldContext = "WorldContextObject", AutoCreateRefTerm = "ActorsToIgnore", DisplayName = "MultiSphereTraceByProfile", AdvancedDisplay = "TraceColor,TraceHitColor,DrawTime", Keywords = "sweep"))
+-	static bool SphereTraceMultiByProfile(UObject* WorldContextObject, const FVector Start, const FVector End, float Radius, FName ProfileName, bool bTraceComplex, const TArray<AActor*>& ActorsToIgnore, EDrawDebugTrace::Type DrawDebugType, TArray<FHitResult>& OutHits, bool bIgnoreSelf, FLinearColor TraceColor = FLinearColor::Red, FLinearColor TraceHitColor = FLinearColor::Green, float DrawTime = 5.0f);
++	static bool SphereTraceMultiByProfile(UObject* WorldContextObject, const FVector Start, const FVector End, float Radius, FName ProfileName, const int32 TraceLayer, bool bTraceComplex, const TArray<AActor*>& ActorsToIgnore, EDrawDebugTrace::Type DrawDebugType, TArray<FHitResult>& OutHits, bool bIgnoreSelf, FLinearColor TraceColor = FLinearColor::Red, FLinearColor TraceHitColor = FLinearColor::Green, float DrawTime = 5.0f);
+ 
+ 	/**
+ 	*  Sweep a box against the world and return the first blocking hit using a specific profile
+@@ -1279,7 +1279,7 @@
+ 	* @return				True if there was a hit, false otherwise.
+ 	*/
+ 	UFUNCTION(BlueprintCallable, Category = "Collision", meta = (bIgnoreSelf = "true", WorldContext = "WorldContextObject", AutoCreateRefTerm = "ActorsToIgnore", DisplayName = "BoxTraceByProfile", AdvancedDisplay = "TraceColor,TraceHitColor,DrawTime", Keywords = "sweep"))
+-	static bool BoxTraceSingleByProfile(UObject* WorldContextObject, const FVector Start, const FVector End, const FVector HalfSize, const FRotator Orientation, FName ProfileName, bool bTraceComplex, const TArray<AActor*>& ActorsToIgnore, EDrawDebugTrace::Type DrawDebugType, FHitResult& OutHit, bool bIgnoreSelf, FLinearColor TraceColor = FLinearColor::Red, FLinearColor TraceHitColor = FLinearColor::Green, float DrawTime = 5.0f);
++	static bool BoxTraceSingleByProfile(UObject* WorldContextObject, const FVector Start, const FVector End, const FVector HalfSize, const FRotator Orientation, FName ProfileName, const int32 TraceLayer, bool bTraceComplex, const TArray<AActor*>& ActorsToIgnore, EDrawDebugTrace::Type DrawDebugType, FHitResult& OutHit, bool bIgnoreSelf, FLinearColor TraceColor = FLinearColor::Red, FLinearColor TraceHitColor = FLinearColor::Green, float DrawTime = 5.0f);
+ 
+ 	/**
+ 	*  Sweep a box against the world and return all initial overlaps using a specific profile, then overlapping hits and then first blocking hit
+@@ -1296,7 +1296,7 @@
+ 	* @return				True if there was a blocking hit, false otherwise.
+ 	*/
+ 	UFUNCTION(BlueprintCallable, Category = "Collision", meta = (bIgnoreSelf = "true", WorldContext = "WorldContextObject", AutoCreateRefTerm = "ActorsToIgnore", DisplayName = "MultiBoxTraceByProfile", AdvancedDisplay = "TraceColor,TraceHitColor,DrawTime", Keywords = "sweep"))
+-	static bool BoxTraceMultiByProfile(UObject* WorldContextObject, const FVector Start, const FVector End, FVector HalfSize, const FRotator Orientation, FName ProfileName, bool bTraceComplex, const TArray<AActor*>& ActorsToIgnore, EDrawDebugTrace::Type DrawDebugType, TArray<FHitResult>& OutHits, bool bIgnoreSelf, FLinearColor TraceColor = FLinearColor::Red, FLinearColor TraceHitColor = FLinearColor::Green, float DrawTime = 5.0f);
++	static bool BoxTraceMultiByProfile(UObject* WorldContextObject, const FVector Start, const FVector End, FVector HalfSize, const FRotator Orientation, FName ProfileName, const int32 TraceLayer, bool bTraceComplex, const TArray<AActor*>& ActorsToIgnore, EDrawDebugTrace::Type DrawDebugType, TArray<FHitResult>& OutHits, bool bIgnoreSelf, FLinearColor TraceColor = FLinearColor::Red, FLinearColor TraceHitColor = FLinearColor::Green, float DrawTime = 5.0f);
+ 
+ 
+ 	/**
+@@ -1313,7 +1313,7 @@
+ 	* @return				True if there was a hit, false otherwise.
+ 	*/
+ 	UFUNCTION(BlueprintCallable, Category = "Collision", meta = (bIgnoreSelf = "true", WorldContext = "WorldContextObject", AutoCreateRefTerm = "ActorsToIgnore", DisplayName = "CapsuleTraceByProfile", AdvancedDisplay = "TraceColor,TraceHitColor,DrawTime", Keywords = "sweep"))
+-	static bool CapsuleTraceSingleByProfile(UObject* WorldContextObject, const FVector Start, const FVector End, float Radius, float HalfHeight, FName ProfileName, bool bTraceComplex, const TArray<AActor*>& ActorsToIgnore, EDrawDebugTrace::Type DrawDebugType, FHitResult& OutHit, bool bIgnoreSelf, FLinearColor TraceColor = FLinearColor::Red, FLinearColor TraceHitColor = FLinearColor::Green, float DrawTime = 5.0f);
++	static bool CapsuleTraceSingleByProfile(UObject* WorldContextObject, const FVector Start, const FVector End, float Radius, float HalfHeight, FName ProfileName, const int32 TraceLayer, bool bTraceComplex, const TArray<AActor*>& ActorsToIgnore, EDrawDebugTrace::Type DrawDebugType, FHitResult& OutHit, bool bIgnoreSelf, FLinearColor TraceColor = FLinearColor::Red, FLinearColor TraceHitColor = FLinearColor::Green, float DrawTime = 5.0f);
+ 
+ 	/**
+ 	*  Sweep a capsule against the world and return all initial overlaps using a specific profile, then overlapping hits and then first blocking hit
+@@ -1331,7 +1331,7 @@
+ 	* @return				True if there was a blocking hit, false otherwise.
+ 	*/
+ 	UFUNCTION(BlueprintCallable, Category = "Collision", meta = (bIgnoreSelf = "true", WorldContext = "WorldContextObject", AutoCreateRefTerm = "ActorsToIgnore", DisplayName = "MultiCapsuleTraceByProfile", AdvancedDisplay = "TraceColor,TraceHitColor,DrawTime", Keywords = "sweep"))
+-	static bool CapsuleTraceMultiByProfile(UObject* WorldContextObject, const FVector Start, const FVector End, float Radius, float HalfHeight, FName ProfileName, bool bTraceComplex, const TArray<AActor*>& ActorsToIgnore, EDrawDebugTrace::Type DrawDebugType, TArray<FHitResult>& OutHits, bool bIgnoreSelf, FLinearColor TraceColor = FLinearColor::Red, FLinearColor TraceHitColor = FLinearColor::Green, float DrawTime = 5.0f);
++	static bool CapsuleTraceMultiByProfile(UObject* WorldContextObject, const FVector Start, const FVector End, float Radius, float HalfHeight, FName ProfileName, const int32 TraceLayer, bool bTraceComplex, const TArray<AActor*>& ActorsToIgnore, EDrawDebugTrace::Type DrawDebugType, TArray<FHitResult>& OutHits, bool bIgnoreSelf, FLinearColor TraceColor = FLinearColor::Red, FLinearColor TraceHitColor = FLinearColor::Green, float DrawTime = 5.0f);
+ 
+ 
+ 
+diff -ruN Engine/Source/Runtime/Engine/Private/Collision/Collision.cpp Engine/Source/Runtime/Engine/Private/Collision/Collision.cpp
+--- Engine/Source/Runtime/Engine/Private/Collision/Collision.cpp	2019-12-01 14:19:48.856476300 +0300
++++ Engine/Source/Runtime/Engine/Private/Collision/Collision.cpp	2019-12-01 14:12:41.874764100 +0300
+@@ -179,6 +178,8 @@
+ 		OwnerTag = InIgnoreActor->GetFName();
+ 	}
+ 
++	Layer = 0;
++
+ #if !(UE_BUILD_TEST || UE_BUILD_SHIPPING)
+ 		bDebugQuery = false;
+ #endif
+@@ -308,6 +310,11 @@
+ 	}
+ }
+ 
++void FCollisionQueryParams::SetLayer(const uint32 NewLayer)
++{
++	Layer = NewLayer;
++}
++
+ const FCollisionQueryParams::IgnoreComponentsArrayType& FCollisionQueryParams::GetIgnoredComponents() const
+ {
+ 	if (!bComponentListUnique)
+diff -ruN Engine/Source/Runtime/Engine/Private/Components/PrimitiveComponent.cpp Engine/Source/Runtime/Engine/Private/Components/PrimitiveComponent.cpp
+--- Engine/Source/Runtime/Engine/Private/Components/PrimitiveComponent.cpp	2019-12-01 14:19:48.857476100 +0300
++++ Engine/Source/Runtime/Engine/Private/Components/PrimitiveComponent.cpp	2019-12-01 14:12:41.875764000 +0300
+@@ -1904,6 +1904,7 @@
+ 	OutResponseParam.CollisionResponse = BodyInstance.GetResponseToChannels();
+ 	OutParams.AddIgnoredActors(MoveIgnoreActors);
+ 	OutParams.AddIgnoredComponents(MoveIgnoreComponents);
++	OutParams.SetLayer(GetOwner()->CollisionLayer);
+ 	OutParams.bTraceComplex = bTraceComplexOnMove;
+ 	OutParams.bReturnPhysicalMaterial = bReturnMaterialOnMove;
+ 	OutParams.IgnoreMask = GetMoveIgnoreMask();
+diff -ruN Engine/Source/Runtime/Engine/Private/KismetSystemLibrary.cpp Engine/Source/Runtime/Engine/Private/KismetSystemLibrary.cpp
+--- Engine/Source/Runtime/Engine/Private/KismetSystemLibrary.cpp	2019-12-01 14:18:54.048037100 +0300
++++ Engine/Source/Runtime/Engine/Private/KismetSystemLibrary.cpp	2019-12-01 14:12:41.875764000 +0300
+@@ -1382,12 +1382,13 @@
+ }
+ 
+ 
+-bool UKismetSystemLibrary::LineTraceSingle(UObject* WorldContextObject, const FVector Start, const FVector End, ETraceTypeQuery TraceChannel, bool bTraceComplex, const TArray<AActor*>& ActorsToIgnore, EDrawDebugTrace::Type DrawDebugType, FHitResult& OutHit, bool bIgnoreSelf, FLinearColor TraceColor, FLinearColor TraceHitColor, float DrawTime)
++bool UKismetSystemLibrary::LineTraceSingle(UObject* WorldContextObject, const FVector Start, const FVector End, const int32 TraceLayer, ETraceTypeQuery TraceChannel, bool bTraceComplex, const TArray<AActor*>& ActorsToIgnore, EDrawDebugTrace::Type DrawDebugType, FHitResult& OutHit, bool bIgnoreSelf, FLinearColor TraceColor, FLinearColor TraceHitColor, float DrawTime)
+ {
+ 	ECollisionChannel CollisionChannel = UEngineTypes::ConvertToCollisionChannel(TraceChannel);
+ 
+ 	static const FName LineTraceSingleName(TEXT("LineTraceSingle"));
+ 	FCollisionQueryParams Params = ConfigureCollisionParams(LineTraceSingleName, bTraceComplex, ActorsToIgnore, bIgnoreSelf, WorldContextObject);
++	Params.SetLayer(TraceLayer);
+ 
+ 	UWorld* World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull);
+ 	bool const bHit = World ? World->LineTraceSingleByChannel(OutHit, Start, End, CollisionChannel, Params) : false;
+@@ -1399,12 +1400,13 @@
+ 	return bHit;
+ }
+ 
+-bool UKismetSystemLibrary::LineTraceMulti(UObject* WorldContextObject, const FVector Start, const FVector End, ETraceTypeQuery TraceChannel, bool bTraceComplex, const TArray<AActor*>& ActorsToIgnore, EDrawDebugTrace::Type DrawDebugType, TArray<FHitResult>& OutHits, bool bIgnoreSelf, FLinearColor TraceColor, FLinearColor TraceHitColor, float DrawTime)
++bool UKismetSystemLibrary::LineTraceMulti(UObject* WorldContextObject, const FVector Start, const FVector End, const int32 TraceLayer, ETraceTypeQuery TraceChannel, bool bTraceComplex, const TArray<AActor*>& ActorsToIgnore, EDrawDebugTrace::Type DrawDebugType, TArray<FHitResult>& OutHits, bool bIgnoreSelf, FLinearColor TraceColor, FLinearColor TraceHitColor, float DrawTime)
+ {
+ 	ECollisionChannel CollisionChannel = UEngineTypes::ConvertToCollisionChannel(TraceChannel);
+ 
+ 	static const FName LineTraceMultiName(TEXT("LineTraceMulti"));
+ 	FCollisionQueryParams Params = ConfigureCollisionParams(LineTraceMultiName, bTraceComplex, ActorsToIgnore, bIgnoreSelf, WorldContextObject);
++	Params.SetLayer(TraceLayer);
+ 
+ 	UWorld* World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull);
+ 	bool const bHit = World ? World->LineTraceMultiByChannel(OutHits, Start, End, CollisionChannel, Params) : false;
+@@ -1416,10 +1418,11 @@
+ 	return bHit;
+ }
+ 
+-bool UKismetSystemLibrary::BoxTraceSingle(UObject* WorldContextObject, const FVector Start, const FVector End, const FVector HalfSize, const FRotator Orientation, ETraceTypeQuery TraceChannel, bool bTraceComplex, const TArray<AActor*>& ActorsToIgnore, EDrawDebugTrace::Type DrawDebugType, FHitResult& OutHit, bool bIgnoreSelf, FLinearColor TraceColor, FLinearColor TraceHitColor, float DrawTime)
++bool UKismetSystemLibrary::BoxTraceSingle(UObject* WorldContextObject, const FVector Start, const FVector End, const FVector HalfSize, const FRotator Orientation, const int32 TraceLayer, ETraceTypeQuery TraceChannel, bool bTraceComplex, const TArray<AActor*>& ActorsToIgnore, EDrawDebugTrace::Type DrawDebugType, FHitResult& OutHit, bool bIgnoreSelf, FLinearColor TraceColor, FLinearColor TraceHitColor, float DrawTime)
+ {
+ 	static const FName BoxTraceSingleName(TEXT("BoxTraceSingle"));
+ 	FCollisionQueryParams Params = ConfigureCollisionParams(BoxTraceSingleName, bTraceComplex, ActorsToIgnore, bIgnoreSelf, WorldContextObject);
++	Params.SetLayer(TraceLayer);
+ 
+ 	UWorld* World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull);
+ 	bool const bHit = World ? World->SweepSingleByChannel(OutHit, Start, End, Orientation.Quaternion(), UEngineTypes::ConvertToCollisionChannel(TraceChannel), FCollisionShape::MakeBox(HalfSize), Params) : false;
+@@ -1431,10 +1434,11 @@
+ 	return bHit;
+ }
+ 
+-bool UKismetSystemLibrary::BoxTraceMulti(UObject* WorldContextObject, const FVector Start, const FVector End, const FVector HalfSize, const FRotator Orientation, ETraceTypeQuery TraceChannel, bool bTraceComplex, const TArray<AActor*>& ActorsToIgnore, EDrawDebugTrace::Type DrawDebugType, TArray<FHitResult>& OutHits, bool bIgnoreSelf, FLinearColor TraceColor, FLinearColor TraceHitColor, float DrawTime)
++bool UKismetSystemLibrary::BoxTraceMulti(UObject* WorldContextObject, const FVector Start, const FVector End, const FVector HalfSize, const FRotator Orientation, const int32 TraceLayer, ETraceTypeQuery TraceChannel, bool bTraceComplex, const TArray<AActor*>& ActorsToIgnore, EDrawDebugTrace::Type DrawDebugType, TArray<FHitResult>& OutHits, bool bIgnoreSelf, FLinearColor TraceColor, FLinearColor TraceHitColor, float DrawTime)
+ {
+ 	static const FName BoxTraceMultiName(TEXT("BoxTraceMulti"));
+ 	FCollisionQueryParams Params = ConfigureCollisionParams(BoxTraceMultiName, bTraceComplex, ActorsToIgnore, bIgnoreSelf, WorldContextObject);
++	Params.SetLayer(TraceLayer);
+ 
+ 	UWorld* World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull);
+ 	bool const bHit = World ? World->SweepMultiByChannel(OutHits, Start, End, Orientation.Quaternion(), UEngineTypes::ConvertToCollisionChannel(TraceChannel), FCollisionShape::MakeBox(HalfSize), Params) : false;
+@@ -1446,12 +1450,13 @@
+ 	return bHit;
+ }
+ 
+-bool UKismetSystemLibrary::SphereTraceSingle(UObject* WorldContextObject, const FVector Start, const FVector End, float Radius, ETraceTypeQuery TraceChannel, bool bTraceComplex, const TArray<AActor*>& ActorsToIgnore, EDrawDebugTrace::Type DrawDebugType, FHitResult& OutHit, bool bIgnoreSelf, FLinearColor TraceColor, FLinearColor TraceHitColor, float DrawTime)
++bool UKismetSystemLibrary::SphereTraceSingle(UObject* WorldContextObject, const FVector Start, const FVector End, float Radius, const int32 TraceLayer, ETraceTypeQuery TraceChannel, bool bTraceComplex, const TArray<AActor*>& ActorsToIgnore, EDrawDebugTrace::Type DrawDebugType, FHitResult& OutHit, bool bIgnoreSelf, FLinearColor TraceColor, FLinearColor TraceHitColor, float DrawTime)
+ {
+ 	ECollisionChannel CollisionChannel = UEngineTypes::ConvertToCollisionChannel(TraceChannel);
+ 
+ 	static const FName SphereTraceSingleName(TEXT("SphereTraceSingle"));
+ 	FCollisionQueryParams Params = ConfigureCollisionParams(SphereTraceSingleName, bTraceComplex, ActorsToIgnore, bIgnoreSelf, WorldContextObject);
++	Params.SetLayer(TraceLayer);
+ 
+ 	UWorld* World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull);
+ 	bool const bHit = World ? World->SweepSingleByChannel(OutHit, Start, End, FQuat::Identity, CollisionChannel, FCollisionShape::MakeSphere(Radius), Params) : false;
+@@ -1463,12 +1468,13 @@
+ 	return bHit;
+ }
+ 
+-bool UKismetSystemLibrary::SphereTraceMulti(UObject* WorldContextObject, const FVector Start, const FVector End, float Radius, ETraceTypeQuery TraceChannel, bool bTraceComplex, const TArray<AActor*>& ActorsToIgnore, EDrawDebugTrace::Type DrawDebugType, TArray<FHitResult>& OutHits, bool bIgnoreSelf, FLinearColor TraceColor, FLinearColor TraceHitColor, float DrawTime)
++bool UKismetSystemLibrary::SphereTraceMulti(UObject* WorldContextObject, const FVector Start, const FVector End, float Radius, const int32 TraceLayer, ETraceTypeQuery TraceChannel, bool bTraceComplex, const TArray<AActor*>& ActorsToIgnore, EDrawDebugTrace::Type DrawDebugType, TArray<FHitResult>& OutHits, bool bIgnoreSelf, FLinearColor TraceColor, FLinearColor TraceHitColor, float DrawTime)
+ {
+ 	ECollisionChannel CollisionChannel = UEngineTypes::ConvertToCollisionChannel(TraceChannel);
+ 
+ 	static const FName SphereTraceMultiName(TEXT("SphereTraceMulti"));
+ 	FCollisionQueryParams Params = ConfigureCollisionParams(SphereTraceMultiName, bTraceComplex, ActorsToIgnore, bIgnoreSelf, WorldContextObject);
++	Params.SetLayer(TraceLayer);
+ 
+ 	UWorld* World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull);
+ 	bool const bHit = World ? World->SweepMultiByChannel(OutHits, Start, End, FQuat::Identity, CollisionChannel, FCollisionShape::MakeSphere(Radius), Params) : false;
+@@ -1480,12 +1486,13 @@
+ 	return bHit;
+ }
+ 
+-bool UKismetSystemLibrary::CapsuleTraceSingle(UObject* WorldContextObject, const FVector Start, const FVector End, float Radius, float HalfHeight, ETraceTypeQuery TraceChannel, bool bTraceComplex, const TArray<AActor*>& ActorsToIgnore, EDrawDebugTrace::Type DrawDebugType, FHitResult& OutHit, bool bIgnoreSelf, FLinearColor TraceColor, FLinearColor TraceHitColor, float DrawTime)
++bool UKismetSystemLibrary::CapsuleTraceSingle(UObject* WorldContextObject, const FVector Start, const FVector End, float Radius, float HalfHeight, const int32 TraceLayer, ETraceTypeQuery TraceChannel, bool bTraceComplex, const TArray<AActor*>& ActorsToIgnore, EDrawDebugTrace::Type DrawDebugType, FHitResult& OutHit, bool bIgnoreSelf, FLinearColor TraceColor, FLinearColor TraceHitColor, float DrawTime)
+ {
+ 	ECollisionChannel CollisionChannel = UEngineTypes::ConvertToCollisionChannel(TraceChannel);
+ 
+ 	static const FName CapsuleTraceSingleName(TEXT("CapsuleTraceSingle"));
+ 	FCollisionQueryParams Params = ConfigureCollisionParams(CapsuleTraceSingleName, bTraceComplex, ActorsToIgnore, bIgnoreSelf, WorldContextObject);
++	Params.SetLayer(TraceLayer);
+ 
+ 	UWorld* World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull);
+ 	bool const bHit = World ? World->SweepSingleByChannel(OutHit, Start, End, FQuat::Identity, CollisionChannel, FCollisionShape::MakeCapsule(Radius, HalfHeight), Params) : false;
+@@ -1498,12 +1505,13 @@
+ }
+ 
+ 
+-bool UKismetSystemLibrary::CapsuleTraceMulti(UObject* WorldContextObject, const FVector Start, const FVector End, float Radius, float HalfHeight, ETraceTypeQuery TraceChannel, bool bTraceComplex, const TArray<AActor*>& ActorsToIgnore, EDrawDebugTrace::Type DrawDebugType, TArray<FHitResult>& OutHits, bool bIgnoreSelf, FLinearColor TraceColor, FLinearColor TraceHitColor, float DrawTime)
++bool UKismetSystemLibrary::CapsuleTraceMulti(UObject* WorldContextObject, const FVector Start, const FVector End, float Radius, float HalfHeight, const int32 TraceLayer, ETraceTypeQuery TraceChannel, bool bTraceComplex, const TArray<AActor*>& ActorsToIgnore, EDrawDebugTrace::Type DrawDebugType, TArray<FHitResult>& OutHits, bool bIgnoreSelf, FLinearColor TraceColor, FLinearColor TraceHitColor, float DrawTime)
+ {
+ 	ECollisionChannel CollisionChannel = UEngineTypes::ConvertToCollisionChannel(TraceChannel);
+ 
+ 	static const FName CapsuleTraceMultiName(TEXT("CapsuleTraceMulti"));
+ 	FCollisionQueryParams Params = ConfigureCollisionParams(CapsuleTraceMultiName, bTraceComplex, ActorsToIgnore, bIgnoreSelf, WorldContextObject);
++	Params.SetLayer(TraceLayer);
+ 
+ 	UWorld* World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull);
+ 	bool const bHit = World ? World->SweepMultiByChannel(OutHits, Start, End, FQuat::Identity, CollisionChannel, FCollisionShape::MakeCapsule(Radius, HalfHeight), Params) : false;
+@@ -1516,10 +1524,11 @@
+ }
+ 
+ /** Object Query functions **/
+-bool UKismetSystemLibrary::LineTraceSingleForObjects(UObject* WorldContextObject, const FVector Start, const FVector End, const TArray<TEnumAsByte<EObjectTypeQuery> > & ObjectTypes, bool bTraceComplex, const TArray<AActor*>& ActorsToIgnore, EDrawDebugTrace::Type DrawDebugType, FHitResult& OutHit, bool bIgnoreSelf, FLinearColor TraceColor, FLinearColor TraceHitColor, float DrawTime)
++bool UKismetSystemLibrary::LineTraceSingleForObjects(UObject* WorldContextObject, const FVector Start, const FVector End, const TArray<TEnumAsByte<EObjectTypeQuery> > & ObjectTypes, const int32 TraceLayer, bool bTraceComplex, const TArray<AActor*>& ActorsToIgnore, EDrawDebugTrace::Type DrawDebugType, FHitResult& OutHit, bool bIgnoreSelf, FLinearColor TraceColor, FLinearColor TraceHitColor, float DrawTime)
+ {
+ 	static const FName LineTraceSingleName(TEXT("LineTraceSingleForObjects"));
+ 	FCollisionQueryParams Params = ConfigureCollisionParams(LineTraceSingleName, bTraceComplex, ActorsToIgnore, bIgnoreSelf, WorldContextObject);
++	Params.SetLayer(TraceLayer);
+ 
+ 	FCollisionObjectQueryParams ObjectParams = ConfigureCollisionObjectParams(ObjectTypes);
+ 	if (ObjectParams.IsValid() == false)
+@@ -1538,10 +1547,11 @@
+ 	return bHit;
+ }
+ 
+-bool UKismetSystemLibrary::LineTraceMultiForObjects(UObject* WorldContextObject, const FVector Start, const FVector End, const TArray<TEnumAsByte<EObjectTypeQuery> > & ObjectTypes, bool bTraceComplex, const TArray<AActor*>& ActorsToIgnore, EDrawDebugTrace::Type DrawDebugType, TArray<FHitResult>& OutHits, bool bIgnoreSelf, FLinearColor TraceColor, FLinearColor TraceHitColor, float DrawTime)
++bool UKismetSystemLibrary::LineTraceMultiForObjects(UObject* WorldContextObject, const FVector Start, const FVector End, const TArray<TEnumAsByte<EObjectTypeQuery> > & ObjectTypes, const int32 TraceLayer, bool bTraceComplex, const TArray<AActor*>& ActorsToIgnore, EDrawDebugTrace::Type DrawDebugType, TArray<FHitResult>& OutHits, bool bIgnoreSelf, FLinearColor TraceColor, FLinearColor TraceHitColor, float DrawTime)
+ {
+ 	static const FName LineTraceMultiName(TEXT("LineTraceMultiForObjects"));
+ 	FCollisionQueryParams Params = ConfigureCollisionParams(LineTraceMultiName, bTraceComplex, ActorsToIgnore, bIgnoreSelf, WorldContextObject);
++	Params.SetLayer(TraceLayer);
+ 
+ 	FCollisionObjectQueryParams ObjectParams = ConfigureCollisionObjectParams(ObjectTypes);
+ 	if (ObjectParams.IsValid() == false)
+@@ -1560,10 +1570,11 @@
+ 	return bHit;
+ }
+ 
+-bool UKismetSystemLibrary::SphereTraceSingleForObjects(UObject* WorldContextObject, const FVector Start, const FVector End, float Radius, const TArray<TEnumAsByte<EObjectTypeQuery> > & ObjectTypes, bool bTraceComplex, const TArray<AActor*>& ActorsToIgnore, EDrawDebugTrace::Type DrawDebugType, FHitResult& OutHit, bool bIgnoreSelf, FLinearColor TraceColor, FLinearColor TraceHitColor, float DrawTime)
++bool UKismetSystemLibrary::SphereTraceSingleForObjects(UObject* WorldContextObject, const FVector Start, const FVector End, float Radius, const TArray<TEnumAsByte<EObjectTypeQuery> > & ObjectTypes, const int32 TraceLayer, bool bTraceComplex, const TArray<AActor*>& ActorsToIgnore, EDrawDebugTrace::Type DrawDebugType, FHitResult& OutHit, bool bIgnoreSelf, FLinearColor TraceColor, FLinearColor TraceHitColor, float DrawTime)
+ {
+ 	static const FName SphereTraceSingleName(TEXT("SphereTraceSingleForObjects"));
+ 	FCollisionQueryParams Params = ConfigureCollisionParams(SphereTraceSingleName, bTraceComplex, ActorsToIgnore, bIgnoreSelf, WorldContextObject);
++	Params.SetLayer(TraceLayer);
+ 
+ 	FCollisionObjectQueryParams ObjectParams = ConfigureCollisionObjectParams(ObjectTypes);
+ 	if (ObjectParams.IsValid() == false)
+@@ -1582,10 +1593,11 @@
+ 	return bHit;
+ }
+ 
+-bool UKismetSystemLibrary::SphereTraceMultiForObjects(UObject* WorldContextObject, const FVector Start, const FVector End, float Radius, const TArray<TEnumAsByte<EObjectTypeQuery> > & ObjectTypes, bool bTraceComplex, const TArray<AActor*>& ActorsToIgnore, EDrawDebugTrace::Type DrawDebugType, TArray<FHitResult>& OutHits, bool bIgnoreSelf, FLinearColor TraceColor, FLinearColor TraceHitColor, float DrawTime)
++bool UKismetSystemLibrary::SphereTraceMultiForObjects(UObject* WorldContextObject, const FVector Start, const FVector End, float Radius, const TArray<TEnumAsByte<EObjectTypeQuery> > & ObjectTypes, const int32 TraceLayer, bool bTraceComplex, const TArray<AActor*>& ActorsToIgnore, EDrawDebugTrace::Type DrawDebugType, TArray<FHitResult>& OutHits, bool bIgnoreSelf, FLinearColor TraceColor, FLinearColor TraceHitColor, float DrawTime)
+ {
+ 	static const FName SphereTraceMultiName(TEXT("SphereTraceMultiForObjects"));
+ 	FCollisionQueryParams Params = ConfigureCollisionParams(SphereTraceMultiName, bTraceComplex, ActorsToIgnore, bIgnoreSelf, WorldContextObject);
++	Params.SetLayer(TraceLayer);
+ 
+ 	FCollisionObjectQueryParams ObjectParams = ConfigureCollisionObjectParams(ObjectTypes);
+ 	if (ObjectParams.IsValid() == false)
+@@ -1604,10 +1616,11 @@
+ 	return bHit;
+ }
+ 
+-bool UKismetSystemLibrary::BoxTraceSingleForObjects(UObject* WorldContextObject, const FVector Start, const FVector End, const FVector HalfSize, const FRotator Orientation, const TArray<TEnumAsByte<EObjectTypeQuery> > & ObjectTypes, bool bTraceComplex, const TArray<AActor*>& ActorsToIgnore, EDrawDebugTrace::Type DrawDebugType, FHitResult& OutHit, bool bIgnoreSelf, FLinearColor TraceColor, FLinearColor TraceHitColor, float DrawTime)
++bool UKismetSystemLibrary::BoxTraceSingleForObjects(UObject* WorldContextObject, const FVector Start, const FVector End, const FVector HalfSize, const FRotator Orientation, const TArray<TEnumAsByte<EObjectTypeQuery> > & ObjectTypes, const int32 TraceLayer, bool bTraceComplex, const TArray<AActor*>& ActorsToIgnore, EDrawDebugTrace::Type DrawDebugType, FHitResult& OutHit, bool bIgnoreSelf, FLinearColor TraceColor, FLinearColor TraceHitColor, float DrawTime)
+ {
+ 	static const FName BoxTraceSingleName(TEXT("BoxTraceSingleForObjects"));
+ 	FCollisionQueryParams Params = ConfigureCollisionParams(BoxTraceSingleName, bTraceComplex, ActorsToIgnore, bIgnoreSelf, WorldContextObject);
++	Params.SetLayer(TraceLayer);
+ 
+ 	TArray<TEnumAsByte<ECollisionChannel>> CollisionObjectTraces;
+ 	CollisionObjectTraces.AddUninitialized(ObjectTypes.Num());
+@@ -1629,10 +1642,11 @@
+ 	return bHit;
+ }
+ 
+-bool UKismetSystemLibrary::BoxTraceMultiForObjects(UObject* WorldContextObject, const FVector Start, const FVector End, const FVector HalfSize, const FRotator Orientation, const TArray<TEnumAsByte<	EObjectTypeQuery> > & ObjectTypes, bool bTraceComplex, const TArray<AActor*>& ActorsToIgnore, EDrawDebugTrace::Type DrawDebugType, TArray<FHitResult>& OutHits, bool bIgnoreSelf, FLinearColor TraceColor, FLinearColor TraceHitColor, float DrawTime)
++bool UKismetSystemLibrary::BoxTraceMultiForObjects(UObject* WorldContextObject, const FVector Start, const FVector End, const FVector HalfSize, const FRotator Orientation, const TArray<TEnumAsByte<	EObjectTypeQuery> > & ObjectTypes, const int32 TraceLayer, bool bTraceComplex, const TArray<AActor*>& ActorsToIgnore, EDrawDebugTrace::Type DrawDebugType, TArray<FHitResult>& OutHits, bool bIgnoreSelf, FLinearColor TraceColor, FLinearColor TraceHitColor, float DrawTime)
+ {
+ 	static const FName BoxTraceMultiName(TEXT("BoxTraceMultiForObjects"));
+ 	FCollisionQueryParams Params = ConfigureCollisionParams(BoxTraceMultiName, bTraceComplex, ActorsToIgnore, bIgnoreSelf, WorldContextObject);
++	Params.SetLayer(TraceLayer);
+ 
+ 	FCollisionObjectQueryParams ObjectParams = ConfigureCollisionObjectParams(ObjectTypes);
+ 	if (ObjectParams.IsValid() == false)
+@@ -1651,10 +1665,11 @@
+ 	return bHit;
+ }
+ 
+-bool UKismetSystemLibrary::CapsuleTraceSingleForObjects(UObject* WorldContextObject, const FVector Start, const FVector End, float Radius, float HalfHeight, const TArray<TEnumAsByte<EObjectTypeQuery> > & ObjectTypes, bool bTraceComplex, const TArray<AActor*>& ActorsToIgnore, EDrawDebugTrace::Type DrawDebugType, FHitResult& OutHit, bool bIgnoreSelf, FLinearColor TraceColor, FLinearColor TraceHitColor, float DrawTime)
++bool UKismetSystemLibrary::CapsuleTraceSingleForObjects(UObject* WorldContextObject, const FVector Start, const FVector End, float Radius, float HalfHeight, const TArray<TEnumAsByte<EObjectTypeQuery> > & ObjectTypes, const int32 TraceLayer, bool bTraceComplex, const TArray<AActor*>& ActorsToIgnore, EDrawDebugTrace::Type DrawDebugType, FHitResult& OutHit, bool bIgnoreSelf, FLinearColor TraceColor, FLinearColor TraceHitColor, float DrawTime)
+ {
+ 	static const FName CapsuleTraceSingleName(TEXT("CapsuleTraceSingleForObjects"));
+ 	FCollisionQueryParams Params = ConfigureCollisionParams(CapsuleTraceSingleName, bTraceComplex, ActorsToIgnore, bIgnoreSelf, WorldContextObject);
++	Params.SetLayer(TraceLayer);
+ 
+ 	FCollisionObjectQueryParams ObjectParams = ConfigureCollisionObjectParams(ObjectTypes);
+ 	if (ObjectParams.IsValid() == false)
+@@ -1673,10 +1688,11 @@
+ 	return bHit;
+ }
+ 
+-bool UKismetSystemLibrary::CapsuleTraceMultiForObjects(UObject* WorldContextObject, const FVector Start, const FVector End, float Radius, float HalfHeight, const TArray<TEnumAsByte<EObjectTypeQuery> > & ObjectTypes, bool bTraceComplex, const TArray<AActor*>& ActorsToIgnore, EDrawDebugTrace::Type DrawDebugType, TArray<FHitResult>& OutHits, bool bIgnoreSelf, FLinearColor TraceColor, FLinearColor TraceHitColor, float DrawTime)
++bool UKismetSystemLibrary::CapsuleTraceMultiForObjects(UObject* WorldContextObject, const FVector Start, const FVector End, float Radius, float HalfHeight, const TArray<TEnumAsByte<EObjectTypeQuery> > & ObjectTypes, const int32 TraceLayer, bool bTraceComplex, const TArray<AActor*>& ActorsToIgnore, EDrawDebugTrace::Type DrawDebugType, TArray<FHitResult>& OutHits, bool bIgnoreSelf, FLinearColor TraceColor, FLinearColor TraceHitColor, float DrawTime)
+ {
+ 	static const FName CapsuleTraceMultiName(TEXT("CapsuleTraceMultiForObjects"));
+ 	FCollisionQueryParams Params = ConfigureCollisionParams(CapsuleTraceMultiName, bTraceComplex, ActorsToIgnore, bIgnoreSelf, WorldContextObject);
++	Params.SetLayer(TraceLayer);
+ 
+ 	FCollisionObjectQueryParams ObjectParams = ConfigureCollisionObjectParams(ObjectTypes);
+ 	if (ObjectParams.IsValid() == false)
+@@ -1696,10 +1712,11 @@
+ }
+ 
+ 
+-bool UKismetSystemLibrary::LineTraceSingleByProfile(UObject* WorldContextObject, const FVector Start, const FVector End, FName ProfileName, bool bTraceComplex, const TArray<AActor*>& ActorsToIgnore, EDrawDebugTrace::Type DrawDebugType, FHitResult& OutHit, bool bIgnoreSelf, FLinearColor TraceColor, FLinearColor TraceHitColor, float DrawTime)
++bool UKismetSystemLibrary::LineTraceSingleByProfile(UObject* WorldContextObject, const FVector Start, const FVector End, FName ProfileName, const int32 TraceLayer, bool bTraceComplex, const TArray<AActor*>& ActorsToIgnore, EDrawDebugTrace::Type DrawDebugType, FHitResult& OutHit, bool bIgnoreSelf, FLinearColor TraceColor, FLinearColor TraceHitColor, float DrawTime)
+ {
+ 	static const FName LineTraceSingleName(TEXT("LineTraceSingleByProfile"));
+ 	FCollisionQueryParams Params = ConfigureCollisionParams(LineTraceSingleName, bTraceComplex, ActorsToIgnore, bIgnoreSelf, WorldContextObject);
++	Params.SetLayer(TraceLayer);
+ 
+ 	UWorld* World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull);
+ 	bool const bHit = World ? World->LineTraceSingleByProfile(OutHit, Start, End, ProfileName, Params) : false;
+@@ -1711,10 +1728,11 @@
+ 	return bHit;
+ }
+ 
+-bool UKismetSystemLibrary::LineTraceMultiByProfile(UObject* WorldContextObject, const FVector Start, const FVector End, FName ProfileName, bool bTraceComplex, const TArray<AActor*>& ActorsToIgnore, EDrawDebugTrace::Type DrawDebugType, TArray<FHitResult>& OutHits, bool bIgnoreSelf, FLinearColor TraceColor, FLinearColor TraceHitColor, float DrawTime)
++bool UKismetSystemLibrary::LineTraceMultiByProfile(UObject* WorldContextObject, const FVector Start, const FVector End, FName ProfileName, const int32 TraceLayer, bool bTraceComplex, const TArray<AActor*>& ActorsToIgnore, EDrawDebugTrace::Type DrawDebugType, TArray<FHitResult>& OutHits, bool bIgnoreSelf, FLinearColor TraceColor, FLinearColor TraceHitColor, float DrawTime)
+ {
+ 	static const FName LineTraceMultiName(TEXT("LineTraceMultiByProfile"));
+ 	FCollisionQueryParams Params = ConfigureCollisionParams(LineTraceMultiName, bTraceComplex, ActorsToIgnore, bIgnoreSelf, WorldContextObject);
++	Params.SetLayer(TraceLayer);
+ 
+ 	UWorld* World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull);
+ 	bool const bHit = World ? World->LineTraceMultiByProfile(OutHits, Start, End, ProfileName, Params) : false;
+@@ -1726,10 +1744,11 @@
+ 	return bHit;
+ }
+ 
+-bool UKismetSystemLibrary::BoxTraceSingleByProfile(UObject* WorldContextObject, const FVector Start, const FVector End, const FVector HalfSize, const FRotator Orientation, FName ProfileName, bool bTraceComplex, const TArray<AActor*>& ActorsToIgnore, EDrawDebugTrace::Type DrawDebugType, FHitResult& OutHit, bool bIgnoreSelf, FLinearColor TraceColor, FLinearColor TraceHitColor, float DrawTime)
++bool UKismetSystemLibrary::BoxTraceSingleByProfile(UObject* WorldContextObject, const FVector Start, const FVector End, const FVector HalfSize, const FRotator Orientation, FName ProfileName, const int32 TraceLayer, bool bTraceComplex, const TArray<AActor*>& ActorsToIgnore, EDrawDebugTrace::Type DrawDebugType, FHitResult& OutHit, bool bIgnoreSelf, FLinearColor TraceColor, FLinearColor TraceHitColor, float DrawTime)
+ {
+ 	static const FName BoxTraceSingleName(TEXT("BoxTraceSingleByProfile"));
+ 	FCollisionQueryParams Params = ConfigureCollisionParams(BoxTraceSingleName, bTraceComplex, ActorsToIgnore, bIgnoreSelf, WorldContextObject);
++	Params.SetLayer(TraceLayer);
+ 
+ 	UWorld* World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull);
+ 
+@@ -1742,10 +1761,11 @@
+ 	return bHit;
+ }
+ 
+-bool UKismetSystemLibrary::BoxTraceMultiByProfile(UObject* WorldContextObject, const FVector Start, const FVector End, const FVector HalfSize, const FRotator Orientation, FName ProfileName, bool bTraceComplex, const TArray<AActor*>& ActorsToIgnore, EDrawDebugTrace::Type DrawDebugType, TArray<FHitResult>& OutHits, bool bIgnoreSelf, FLinearColor TraceColor, FLinearColor TraceHitColor, float DrawTime)
++bool UKismetSystemLibrary::BoxTraceMultiByProfile(UObject* WorldContextObject, const FVector Start, const FVector End, const FVector HalfSize, const FRotator Orientation, FName ProfileName, const int32 TraceLayer, bool bTraceComplex, const TArray<AActor*>& ActorsToIgnore, EDrawDebugTrace::Type DrawDebugType, TArray<FHitResult>& OutHits, bool bIgnoreSelf, FLinearColor TraceColor, FLinearColor TraceHitColor, float DrawTime)
+ {
+ 	static const FName BoxTraceMultiName(TEXT("BoxTraceMultiByProfile"));
+ 	FCollisionQueryParams Params = ConfigureCollisionParams(BoxTraceMultiName, bTraceComplex, ActorsToIgnore, bIgnoreSelf, WorldContextObject);
++	Params.SetLayer(TraceLayer);
+ 
+ 	UWorld* World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull);
+ 	bool const bHit = World ? World->SweepMultiByProfile(OutHits, Start, End, Orientation.Quaternion(), ProfileName, FCollisionShape::MakeBox(HalfSize), Params) : false;
+@@ -1757,10 +1777,11 @@
+ 	return bHit;
+ }
+ 
+-bool UKismetSystemLibrary::SphereTraceSingleByProfile(UObject* WorldContextObject, const FVector Start, const FVector End, float Radius, FName ProfileName, bool bTraceComplex, const TArray<AActor*>& ActorsToIgnore, EDrawDebugTrace::Type DrawDebugType, FHitResult& OutHit, bool bIgnoreSelf, FLinearColor TraceColor, FLinearColor TraceHitColor, float DrawTime)
++bool UKismetSystemLibrary::SphereTraceSingleByProfile(UObject* WorldContextObject, const FVector Start, const FVector End, float Radius, FName ProfileName, const int32 TraceLayer, bool bTraceComplex, const TArray<AActor*>& ActorsToIgnore, EDrawDebugTrace::Type DrawDebugType, FHitResult& OutHit, bool bIgnoreSelf, FLinearColor TraceColor, FLinearColor TraceHitColor, float DrawTime)
+ {
+ 	static const FName SphereTraceSingleName(TEXT("SphereTraceSingleByProfile"));
+ 	FCollisionQueryParams Params = ConfigureCollisionParams(SphereTraceSingleName, bTraceComplex, ActorsToIgnore, bIgnoreSelf, WorldContextObject);
++	Params.SetLayer(TraceLayer);
+ 
+ 	UWorld* World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull);
+ 	bool const bHit = World ? World->SweepSingleByProfile(OutHit, Start, End, FQuat::Identity, ProfileName, FCollisionShape::MakeSphere(Radius), Params) : false;
+@@ -1772,10 +1793,11 @@
+ 	return bHit;
+ }
+ 
+-bool UKismetSystemLibrary::SphereTraceMultiByProfile(UObject* WorldContextObject, const FVector Start, const FVector End, float Radius, FName ProfileName, bool bTraceComplex, const TArray<AActor*>& ActorsToIgnore, EDrawDebugTrace::Type DrawDebugType, TArray<FHitResult>& OutHits, bool bIgnoreSelf, FLinearColor TraceColor, FLinearColor TraceHitColor, float DrawTime)
++bool UKismetSystemLibrary::SphereTraceMultiByProfile(UObject* WorldContextObject, const FVector Start, const FVector End, float Radius, FName ProfileName, const int32 TraceLayer, bool bTraceComplex, const TArray<AActor*>& ActorsToIgnore, EDrawDebugTrace::Type DrawDebugType, TArray<FHitResult>& OutHits, bool bIgnoreSelf, FLinearColor TraceColor, FLinearColor TraceHitColor, float DrawTime)
+ {
+ 	static const FName SphereTraceMultiName(TEXT("SphereTraceMultiByProfile"));
+ 	FCollisionQueryParams Params = ConfigureCollisionParams(SphereTraceMultiName, bTraceComplex, ActorsToIgnore, bIgnoreSelf, WorldContextObject);
++	Params.SetLayer(TraceLayer);
+ 
+ 	UWorld* World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull);
+ 	bool const bHit = World ? World->SweepMultiByProfile(OutHits, Start, End, FQuat::Identity, ProfileName, FCollisionShape::MakeSphere(Radius), Params) : false;
+@@ -1787,10 +1809,11 @@
+ 	return bHit;
+ }
+ 
+-bool UKismetSystemLibrary::CapsuleTraceSingleByProfile(UObject* WorldContextObject, const FVector Start, const FVector End, float Radius, float HalfHeight, FName ProfileName, bool bTraceComplex, const TArray<AActor*>& ActorsToIgnore, EDrawDebugTrace::Type DrawDebugType, FHitResult& OutHit, bool bIgnoreSelf, FLinearColor TraceColor, FLinearColor TraceHitColor, float DrawTime)
++bool UKismetSystemLibrary::CapsuleTraceSingleByProfile(UObject* WorldContextObject, const FVector Start, const FVector End, float Radius, float HalfHeight, FName ProfileName, const int32 TraceLayer, bool bTraceComplex, const TArray<AActor*>& ActorsToIgnore, EDrawDebugTrace::Type DrawDebugType, FHitResult& OutHit, bool bIgnoreSelf, FLinearColor TraceColor, FLinearColor TraceHitColor, float DrawTime)
+ {
+ 	static const FName CapsuleTraceSingleName(TEXT("CapsuleTraceSingleByProfile"));
+ 	FCollisionQueryParams Params = ConfigureCollisionParams(CapsuleTraceSingleName, bTraceComplex, ActorsToIgnore, bIgnoreSelf, WorldContextObject);
++	Params.SetLayer(TraceLayer);
+ 
+ 	UWorld* World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull);
+ 	bool const bHit = World ? World->SweepSingleByProfile(OutHit, Start, End, FQuat::Identity, ProfileName, FCollisionShape::MakeCapsule(Radius, HalfHeight), Params) : false;
+@@ -1803,10 +1826,11 @@
+ }
+ 
+ 
+-bool UKismetSystemLibrary::CapsuleTraceMultiByProfile(UObject* WorldContextObject, const FVector Start, const FVector End, float Radius, float HalfHeight, FName ProfileName, bool bTraceComplex, const TArray<AActor*>& ActorsToIgnore, EDrawDebugTrace::Type DrawDebugType, TArray<FHitResult>& OutHits, bool bIgnoreSelf, FLinearColor TraceColor, FLinearColor TraceHitColor, float DrawTime)
++bool UKismetSystemLibrary::CapsuleTraceMultiByProfile(UObject* WorldContextObject, const FVector Start, const FVector End, float Radius, float HalfHeight, FName ProfileName, const int32 TraceLayer, bool bTraceComplex, const TArray<AActor*>& ActorsToIgnore, EDrawDebugTrace::Type DrawDebugType, TArray<FHitResult>& OutHits, bool bIgnoreSelf, FLinearColor TraceColor, FLinearColor TraceHitColor, float DrawTime)
+ {
+ 	static const FName CapsuleTraceMultiName(TEXT("CapsuleTraceMultiByProfile"));
+ 	FCollisionQueryParams Params = ConfigureCollisionParams(CapsuleTraceMultiName, bTraceComplex, ActorsToIgnore, bIgnoreSelf, WorldContextObject);
++	Params.SetLayer(TraceLayer);
+ 
+ 	UWorld* World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull);
+ 	bool const bHit = World ? World->SweepMultiByProfile(OutHits, Start, End, FQuat::Identity, ProfileName, FCollisionShape::MakeCapsule(Radius, HalfHeight), Params) : false;
+diff -ruN Engine/Source/Runtime/Engine/Private/PhysicsEngine/CollisionQueryFilterCallback.cpp Engine/Source/Runtime/Engine/Private/PhysicsEngine/CollisionQueryFilterCallback.cpp
+--- Engine/Source/Runtime/Engine/Private/PhysicsEngine/CollisionQueryFilterCallback.cpp	2019-12-01 14:19:48.858475700 +0300
++++ Engine/Source/Runtime/Engine/Private/PhysicsEngine/CollisionQueryFilterCallback.cpp	2019-12-01 14:12:41.876763900 +0300
+@@ -152,6 +152,14 @@
+ 		return (PreFilterReturnValue = ECollisionQueryHitType::None);
+ 	}
+ 
++	if (BodyInstance)
++	{
++		if (BodyInstance->OwnerComponent->GetOwner()->CollisionLayer != Layer)
++		{
++			return (PreFilterReturnValue = ECollisionQueryHitType::None);
++		}
++	}
++
+ 	ECollisionQueryHitType Result = FCollisionQueryFilterCallback::CalcQueryHitType(FilterData, ShapeFilter, true);
+ 
+ 	if (Result == ECollisionQueryHitType::Touch && bIgnoreTouches)
+diff -ruN Engine/Source/Runtime/Engine/Private/PhysicsEngine/CollisionQueryFilterCallback.h Engine/Source/Runtime/Engine/Private/PhysicsEngine/CollisionQueryFilterCallback.h
+--- Engine/Source/Runtime/Engine/Private/PhysicsEngine/CollisionQueryFilterCallback.h	2019-12-01 14:19:48.859476900 +0300
++++ Engine/Source/Runtime/Engine/Private/PhysicsEngine/CollisionQueryFilterCallback.h	2019-12-01 14:12:41.877763100 +0300
+@@ -32,6 +32,8 @@
+ 	/** List of ActorIds for this query to ignore */
+ 	const FilterIgnoreActorsArrayType& IgnoreActors;
+ 
++	const uint32 Layer;
++
+ 	/** Whether we are doing an overlap query. This is needed to ensure physx results are never blocking (even if they are in terms of unreal)*/
+ 	bool bIsOverlapQuery;
+ 
+@@ -44,6 +46,7 @@
+ 	FCollisionQueryFilterCallback(const FCollisionQueryParams& InQueryParams, bool bInIsSweep)
+ 		: IgnoreComponents(InQueryParams.GetIgnoredComponents())
+ 		, IgnoreActors(InQueryParams.GetIgnoredActors())
++		, Layer(InQueryParams.GetLayer())
+ #if DETECT_SQ_HITCHES
+ 		, bRecordHitches(false)
+ #endif
+diff -ruN Engine/Source/Runtime/Engine/Private/PrimitiveComponentPhysics.cpp Engine/Source/Runtime/Engine/Private/PrimitiveComponentPhysics.cpp
+--- Engine/Source/Runtime/Engine/Private/PrimitiveComponentPhysics.cpp	2019-12-01 14:18:54.051037100 +0300
++++ Engine/Source/Runtime/Engine/Private/PrimitiveComponentPhysics.cpp	2019-12-01 14:12:41.877763100 +0300
+@@ -972,6 +972,7 @@
+ bool UPrimitiveComponent::K2_LineTraceComponent(FVector TraceStart, FVector TraceEnd, bool bTraceComplex, bool bShowTrace, bool bPersistentShowTrace, FVector& HitLocation, FVector& HitNormal, FName& BoneName, FHitResult& OutHit)
+ {
+ 	FCollisionQueryParams LineParams(SCENE_QUERY_STAT(KismetTraceComponent), bTraceComplex);
++	LineParams.SetLayer(GetOwner()->CollisionLayer);
+ 	const bool bDidHit = LineTraceComponent(OutHit, TraceStart, TraceEnd, LineParams);
+ 
+ 	if( bDidHit )
+diff -ruN Engine/Source/Runtime/Engine/Public/CollisionQueryParams.h Engine/Source/Runtime/Engine/Public/CollisionQueryParams.h
+--- Engine/Source/Runtime/Engine/Public/CollisionQueryParams.h	2019-12-01 14:19:48.860475400 +0300
++++ Engine/Source/Runtime/Engine/Public/CollisionQueryParams.h	2019-12-01 14:12:41.878764300 +0300
+@@ -94,6 +94,8 @@
+ 	/** Set of actors to ignore during the trace */
+ 	IgnoreActorsArrayType IgnoreActors;
+ 
++	uint32 Layer;
++
+ 	void Internal_AddIgnoredComponent(const UPrimitiveComponent* InIgnoreComponent);
+ 
+ public:
+@@ -199,6 +201,12 @@
+ 	 */
+ 	void AddIgnoredComponent_LikelyDuplicatedRoot(const UPrimitiveComponent* InIgnoreComponent);
+ 
++	void SetLayer(const uint32 NewLayer);
++	const uint32 GetLayer() const
++	{
++		return Layer;
++	}
++
+ 	FString ToString() const
+ 	{
+ 		return FString::Printf(TEXT("[%s:%s] TraceComplex(%d)"), *OwnerTag.ToString(), *TraceTag.ToString(), bTraceComplex );
+diff -ruN Engine/Source/Developer/FunctionalTesting/Classes/FunctionalTestUtilityLibrary.h Engine/Source/Developer/FunctionalTesting/Classes/FunctionalTestUtilityLibrary.h
+--- Engine/Source/Developer/FunctionalTesting/Classes/FunctionalTestUtilityLibrary.h	2019-12-01 14:18:54.040037100 +0300
++++ Engine/Source/Developer/FunctionalTesting/Classes/FunctionalTestUtilityLibrary.h	2019-12-01 14:14:33.791127900 +0300
+@@ -20,5 +20,5 @@
+ 
+ 	/** Helper function to trace and permute many options at once */
+ 	UFUNCTION(BlueprintCallable, Category = "Utilities|Collision", meta = (bIgnoreSelf = "true", WorldContext = "WorldContextObject", AutoCreateRefTerm = "ActorsToIgnore", AdvancedDisplay = "TraceColor,TraceHitColor,DrawTime", Keywords = "sweep"))
+-	static UTraceQueryTestResults* TraceChannelTestUtil(UObject* WorldContextObject, const FTraceChannelTestBatchOptions& BatchOptions, const FVector Start, const FVector End, float SphereCapsuleRadius, float CapsuleHalfHeight, FVector BoxHalfSize, const FRotator Orientation, ETraceTypeQuery TraceChannel, TArray<TEnumAsByte<EObjectTypeQuery> > ObjectTypes, FName ProfileName, bool bTraceComplex, const TArray<AActor*>& ActorsToIgnore, bool bIgnoreSelf, EDrawDebugTrace::Type DrawDebugType, FLinearColor TraceColor = FLinearColor::Red, FLinearColor TraceHitColor = FLinearColor::Green, float DrawTime = 5.0f);
++	static UTraceQueryTestResults* TraceChannelTestUtil(UObject* WorldContextObject, const FTraceChannelTestBatchOptions& BatchOptions, const FVector Start, const FVector End, float SphereCapsuleRadius, float CapsuleHalfHeight, FVector BoxHalfSize, const FRotator Orientation, const int32 TraceLayer, ETraceTypeQuery TraceChannel, TArray<TEnumAsByte<EObjectTypeQuery> > ObjectTypes, FName ProfileName, bool bTraceComplex, const TArray<AActor*>& ActorsToIgnore, bool bIgnoreSelf, EDrawDebugTrace::Type DrawDebugType, FLinearColor TraceColor = FLinearColor::Red, FLinearColor TraceHitColor = FLinearColor::Green, float DrawTime = 5.0f);
+ };
+diff -ruN Engine/Source/Developer/FunctionalTesting/Private/FunctionalTestUtilityLibrary.cpp Engine/Source/Developer/FunctionalTesting/Private/FunctionalTestUtilityLibrary.cpp
+--- Engine/Source/Developer/FunctionalTesting/Private/FunctionalTestUtilityLibrary.cpp	2019-12-01 14:18:54.041037500 +0300
++++ Engine/Source/Developer/FunctionalTesting/Private/FunctionalTestUtilityLibrary.cpp	2019-12-01 14:16:17.513761900 +0300
+@@ -3,7 +3,7 @@
+ #include "FunctionalTestUtilityLibrary.h"
+ #include "TraceQueryTestResults.h"
+ 
+-UTraceQueryTestResults* UFunctionalTestUtilityLibrary::TraceChannelTestUtil(UObject* WorldContextObject, const FTraceChannelTestBatchOptions& BatchOptions, const FVector Start, const FVector End, float SphereCapsuleRadius, float CapsuleHalfHeight, FVector BoxHalfSize, const FRotator Orientation, ETraceTypeQuery TraceChannel, TArray<TEnumAsByte<EObjectTypeQuery> > ObjectTypes, FName ProfileName, bool bTraceComplex, const TArray<AActor*>& ActorsToIgnore, bool bIgnoreSelf, EDrawDebugTrace::Type DrawDebugType, FLinearColor TraceColor, FLinearColor TraceHitColor, float DrawTime)
++UTraceQueryTestResults* UFunctionalTestUtilityLibrary::TraceChannelTestUtil(UObject* WorldContextObject, const FTraceChannelTestBatchOptions& BatchOptions, const FVector Start, const FVector End, float SphereCapsuleRadius, float CapsuleHalfHeight, FVector BoxHalfSize, const FRotator Orientation, const int32 TraceLayer, ETraceTypeQuery TraceChannel, TArray<TEnumAsByte<EObjectTypeQuery> > ObjectTypes, FName ProfileName, bool bTraceComplex, const TArray<AActor*>& ActorsToIgnore, bool bIgnoreSelf, EDrawDebugTrace::Type DrawDebugType, FLinearColor TraceColor, FLinearColor TraceHitColor, float DrawTime)
+ {
+ 	UTraceQueryTestResults* Results = NewObject<UTraceQueryTestResults>();
+ 	if(Results)
+@@ -14,20 +14,20 @@
+ 		{
+ 			if(BatchOptions.bChannelTrace)
+ 			{
+-				Results->ChannelResults.LineResults.bSingleResult = UKismetSystemLibrary::LineTraceSingle(WorldContextObject, Start, End, TraceChannel, bTraceComplex, ActorsToIgnore, DrawDebugType, Results->ChannelResults.LineResults.SingleHit, bIgnoreSelf, TraceColor, TraceHitColor, DrawTime);
+-				Results->ChannelResults.LineResults.bMultiResult = UKismetSystemLibrary::LineTraceMulti(WorldContextObject, Start, End, TraceChannel, bTraceComplex, ActorsToIgnore, DrawDebugType, Results->ChannelResults.LineResults.MultiHits, bIgnoreSelf, TraceColor, TraceHitColor, DrawTime);
++				Results->ChannelResults.LineResults.bSingleResult = UKismetSystemLibrary::LineTraceSingle(WorldContextObject, Start, End, TraceLayer, TraceChannel, bTraceComplex, ActorsToIgnore, DrawDebugType, Results->ChannelResults.LineResults.SingleHit, bIgnoreSelf, TraceColor, TraceHitColor, DrawTime);
++				Results->ChannelResults.LineResults.bMultiResult = UKismetSystemLibrary::LineTraceMulti(WorldContextObject, Start, End, TraceLayer, TraceChannel, bTraceComplex, ActorsToIgnore, DrawDebugType, Results->ChannelResults.LineResults.MultiHits, bIgnoreSelf, TraceColor, TraceHitColor, DrawTime);
+ 			}
+ 			
+ 			if(BatchOptions.bObjectsTrace)
+ 			{
+-				Results->ObjectResults.LineResults.bSingleResult = UKismetSystemLibrary::LineTraceSingleForObjects(WorldContextObject, Start, End, ObjectTypes, bTraceComplex, ActorsToIgnore, DrawDebugType, Results->ObjectResults.LineResults.SingleHit, bIgnoreSelf, TraceColor, TraceHitColor, DrawTime);
+-				Results->ObjectResults.LineResults.bMultiResult = UKismetSystemLibrary::LineTraceMultiForObjects(WorldContextObject, Start, End, ObjectTypes, bTraceComplex, ActorsToIgnore, DrawDebugType, Results->ObjectResults.LineResults.MultiHits, bIgnoreSelf, TraceColor, TraceHitColor, DrawTime);
++				Results->ObjectResults.LineResults.bSingleResult = UKismetSystemLibrary::LineTraceSingleForObjects(WorldContextObject, Start, End, ObjectTypes, TraceLayer, bTraceComplex, ActorsToIgnore, DrawDebugType, Results->ObjectResults.LineResults.SingleHit, bIgnoreSelf, TraceColor, TraceHitColor, DrawTime);
++				Results->ObjectResults.LineResults.bMultiResult = UKismetSystemLibrary::LineTraceMultiForObjects(WorldContextObject, Start, End, ObjectTypes, TraceLayer, bTraceComplex, ActorsToIgnore, DrawDebugType, Results->ObjectResults.LineResults.MultiHits, bIgnoreSelf, TraceColor, TraceHitColor, DrawTime);
+ 			}
+ 			
+ 			if(BatchOptions.bProfileTrace)
+ 			{
+-				Results->ProfileResults.LineResults.bSingleResult = UKismetSystemLibrary::LineTraceSingleByProfile(WorldContextObject, Start, End, ProfileName, bTraceComplex, ActorsToIgnore, DrawDebugType, Results->ProfileResults.LineResults.SingleHit, bIgnoreSelf, TraceColor, TraceHitColor, DrawTime);
+-				Results->ProfileResults.LineResults.bMultiResult = UKismetSystemLibrary::LineTraceMultiByProfile(WorldContextObject, Start, End, ProfileName, bTraceComplex, ActorsToIgnore, DrawDebugType, Results->ProfileResults.LineResults.MultiHits, bIgnoreSelf, TraceColor, TraceHitColor, DrawTime);
++				Results->ProfileResults.LineResults.bSingleResult = UKismetSystemLibrary::LineTraceSingleByProfile(WorldContextObject, Start, End, ProfileName, TraceLayer, bTraceComplex, ActorsToIgnore, DrawDebugType, Results->ProfileResults.LineResults.SingleHit, bIgnoreSelf, TraceColor, TraceHitColor, DrawTime);
++				Results->ProfileResults.LineResults.bMultiResult = UKismetSystemLibrary::LineTraceMultiByProfile(WorldContextObject, Start, End, ProfileName, TraceLayer, bTraceComplex, ActorsToIgnore, DrawDebugType, Results->ProfileResults.LineResults.MultiHits, bIgnoreSelf, TraceColor, TraceHitColor, DrawTime);
+ 			}
+ 		}
+ 		
+@@ -37,20 +37,20 @@
+ 		{
+ 			if (BatchOptions.bChannelTrace)
+ 			{
+-				Results->ChannelResults.SphereResults.bSingleResult = UKismetSystemLibrary::SphereTraceSingle(WorldContextObject, Start, End, SphereCapsuleRadius, TraceChannel, bTraceComplex, ActorsToIgnore, DrawDebugType, Results->ChannelResults.SphereResults.SingleHit, bIgnoreSelf, TraceColor, TraceHitColor, DrawTime);
+-				Results->ChannelResults.SphereResults.bMultiResult = UKismetSystemLibrary::SphereTraceMulti(WorldContextObject, Start, End, SphereCapsuleRadius, TraceChannel, bTraceComplex, ActorsToIgnore, DrawDebugType, Results->ChannelResults.SphereResults.MultiHits, bIgnoreSelf, TraceColor, TraceHitColor, DrawTime);
++				Results->ChannelResults.SphereResults.bSingleResult = UKismetSystemLibrary::SphereTraceSingle(WorldContextObject, Start, End, SphereCapsuleRadius, TraceLayer, TraceChannel, bTraceComplex, ActorsToIgnore, DrawDebugType, Results->ChannelResults.SphereResults.SingleHit, bIgnoreSelf, TraceColor, TraceHitColor, DrawTime);
++				Results->ChannelResults.SphereResults.bMultiResult = UKismetSystemLibrary::SphereTraceMulti(WorldContextObject, Start, End, SphereCapsuleRadius, TraceLayer, TraceChannel, bTraceComplex, ActorsToIgnore, DrawDebugType, Results->ChannelResults.SphereResults.MultiHits, bIgnoreSelf, TraceColor, TraceHitColor, DrawTime);
+ 			}
+ 
+ 			if (BatchOptions.bObjectsTrace)
+ 			{
+-				Results->ObjectResults.SphereResults.bSingleResult = UKismetSystemLibrary::SphereTraceSingleForObjects(WorldContextObject, Start, End, SphereCapsuleRadius, ObjectTypes, bTraceComplex, ActorsToIgnore, DrawDebugType, Results->ObjectResults.SphereResults.SingleHit, bIgnoreSelf, TraceColor, TraceHitColor, DrawTime);
+-				Results->ObjectResults.SphereResults.bMultiResult = UKismetSystemLibrary::SphereTraceMultiForObjects(WorldContextObject, Start, End, SphereCapsuleRadius, ObjectTypes, bTraceComplex, ActorsToIgnore, DrawDebugType, Results->ObjectResults.SphereResults.MultiHits, bIgnoreSelf, TraceColor, TraceHitColor, DrawTime);
++				Results->ObjectResults.SphereResults.bSingleResult = UKismetSystemLibrary::SphereTraceSingleForObjects(WorldContextObject, Start, End, SphereCapsuleRadius, ObjectTypes, TraceLayer, bTraceComplex, ActorsToIgnore, DrawDebugType, Results->ObjectResults.SphereResults.SingleHit, bIgnoreSelf, TraceColor, TraceHitColor, DrawTime);
++				Results->ObjectResults.SphereResults.bMultiResult = UKismetSystemLibrary::SphereTraceMultiForObjects(WorldContextObject, Start, End, SphereCapsuleRadius, ObjectTypes, TraceLayer, bTraceComplex, ActorsToIgnore, DrawDebugType, Results->ObjectResults.SphereResults.MultiHits, bIgnoreSelf, TraceColor, TraceHitColor, DrawTime);
+ 			}
+ 
+ 			if (BatchOptions.bProfileTrace)
+ 			{
+-				Results->ProfileResults.SphereResults.bSingleResult = UKismetSystemLibrary::SphereTraceSingleByProfile(WorldContextObject, Start, End, SphereCapsuleRadius, ProfileName, bTraceComplex, ActorsToIgnore, DrawDebugType, Results->ProfileResults.SphereResults.SingleHit, bIgnoreSelf, TraceColor, TraceHitColor, DrawTime);
+-				Results->ProfileResults.SphereResults.bMultiResult = UKismetSystemLibrary::SphereTraceMultiByProfile(WorldContextObject, Start, End, SphereCapsuleRadius, ProfileName, bTraceComplex, ActorsToIgnore, DrawDebugType, Results->ProfileResults.SphereResults.MultiHits, bIgnoreSelf, TraceColor, TraceHitColor, DrawTime);
++				Results->ProfileResults.SphereResults.bSingleResult = UKismetSystemLibrary::SphereTraceSingleByProfile(WorldContextObject, Start, End, SphereCapsuleRadius, ProfileName, TraceLayer, bTraceComplex, ActorsToIgnore, DrawDebugType, Results->ProfileResults.SphereResults.SingleHit, bIgnoreSelf, TraceColor, TraceHitColor, DrawTime);
++				Results->ProfileResults.SphereResults.bMultiResult = UKismetSystemLibrary::SphereTraceMultiByProfile(WorldContextObject, Start, End, SphereCapsuleRadius, ProfileName, TraceLayer, bTraceComplex, ActorsToIgnore, DrawDebugType, Results->ProfileResults.SphereResults.MultiHits, bIgnoreSelf, TraceColor, TraceHitColor, DrawTime);
+ 			}
+ 		}
+ 		
+@@ -59,20 +59,20 @@
+ 		{
+ 			if (BatchOptions.bChannelTrace)
+ 			{
+-				Results->ChannelResults.CapsuleResults.bSingleResult = UKismetSystemLibrary::CapsuleTraceSingle(WorldContextObject, Start, End, SphereCapsuleRadius, CapsuleHalfHeight, TraceChannel, bTraceComplex, ActorsToIgnore, DrawDebugType, Results->ChannelResults.CapsuleResults.SingleHit, bIgnoreSelf, TraceColor, TraceHitColor, DrawTime);
+-				Results->ChannelResults.CapsuleResults.bMultiResult = UKismetSystemLibrary::CapsuleTraceMulti(WorldContextObject, Start, End, SphereCapsuleRadius, CapsuleHalfHeight, TraceChannel, bTraceComplex, ActorsToIgnore, DrawDebugType, Results->ChannelResults.CapsuleResults.MultiHits, bIgnoreSelf, TraceColor, TraceHitColor, DrawTime);
++				Results->ChannelResults.CapsuleResults.bSingleResult = UKismetSystemLibrary::CapsuleTraceSingle(WorldContextObject, Start, End, SphereCapsuleRadius, CapsuleHalfHeight, TraceLayer, TraceChannel, bTraceComplex, ActorsToIgnore, DrawDebugType, Results->ChannelResults.CapsuleResults.SingleHit, bIgnoreSelf, TraceColor, TraceHitColor, DrawTime);
++				Results->ChannelResults.CapsuleResults.bMultiResult = UKismetSystemLibrary::CapsuleTraceMulti(WorldContextObject, Start, End, SphereCapsuleRadius, CapsuleHalfHeight, TraceLayer, TraceChannel, bTraceComplex, ActorsToIgnore, DrawDebugType, Results->ChannelResults.CapsuleResults.MultiHits, bIgnoreSelf, TraceColor, TraceHitColor, DrawTime);
+ 			}
+ 			
+ 			if (BatchOptions.bObjectsTrace)
+ 			{
+-				Results->ObjectResults.CapsuleResults.bSingleResult = UKismetSystemLibrary::CapsuleTraceSingleForObjects(WorldContextObject, Start, End, SphereCapsuleRadius, CapsuleHalfHeight, ObjectTypes, bTraceComplex, ActorsToIgnore, DrawDebugType, Results->ObjectResults.CapsuleResults.SingleHit, bIgnoreSelf, TraceColor, TraceHitColor, DrawTime);
+-				Results->ObjectResults.CapsuleResults.bMultiResult = UKismetSystemLibrary::CapsuleTraceMultiForObjects(WorldContextObject, Start, End, SphereCapsuleRadius, CapsuleHalfHeight, ObjectTypes, bTraceComplex, ActorsToIgnore, DrawDebugType, Results->ObjectResults.CapsuleResults.MultiHits, bIgnoreSelf, TraceColor, TraceHitColor, DrawTime);
++				Results->ObjectResults.CapsuleResults.bSingleResult = UKismetSystemLibrary::CapsuleTraceSingleForObjects(WorldContextObject, Start, End, SphereCapsuleRadius, CapsuleHalfHeight, ObjectTypes, TraceLayer, bTraceComplex, ActorsToIgnore, DrawDebugType, Results->ObjectResults.CapsuleResults.SingleHit, bIgnoreSelf, TraceColor, TraceHitColor, DrawTime);
++				Results->ObjectResults.CapsuleResults.bMultiResult = UKismetSystemLibrary::CapsuleTraceMultiForObjects(WorldContextObject, Start, End, SphereCapsuleRadius, CapsuleHalfHeight, ObjectTypes, TraceLayer, bTraceComplex, ActorsToIgnore, DrawDebugType, Results->ObjectResults.CapsuleResults.MultiHits, bIgnoreSelf, TraceColor, TraceHitColor, DrawTime);
+ 			}
+ 
+ 			if (BatchOptions.bProfileTrace)
+ 			{
+-				Results->ProfileResults.CapsuleResults.bSingleResult = UKismetSystemLibrary::CapsuleTraceSingleByProfile(WorldContextObject, Start, End, SphereCapsuleRadius, CapsuleHalfHeight, ProfileName, bTraceComplex, ActorsToIgnore, DrawDebugType, Results->ProfileResults.CapsuleResults.SingleHit, bIgnoreSelf, TraceColor, TraceHitColor, DrawTime);
+-				Results->ProfileResults.CapsuleResults.bMultiResult = UKismetSystemLibrary::CapsuleTraceMultiByProfile(WorldContextObject, Start, End, SphereCapsuleRadius, CapsuleHalfHeight, ProfileName, bTraceComplex, ActorsToIgnore, DrawDebugType, Results->ProfileResults.CapsuleResults.MultiHits, bIgnoreSelf, TraceColor, TraceHitColor, DrawTime);
++				Results->ProfileResults.CapsuleResults.bSingleResult = UKismetSystemLibrary::CapsuleTraceSingleByProfile(WorldContextObject, Start, End, SphereCapsuleRadius, CapsuleHalfHeight, ProfileName, TraceLayer, bTraceComplex, ActorsToIgnore, DrawDebugType, Results->ProfileResults.CapsuleResults.SingleHit, bIgnoreSelf, TraceColor, TraceHitColor, DrawTime);
++				Results->ProfileResults.CapsuleResults.bMultiResult = UKismetSystemLibrary::CapsuleTraceMultiByProfile(WorldContextObject, Start, End, SphereCapsuleRadius, CapsuleHalfHeight, ProfileName, TraceLayer, bTraceComplex, ActorsToIgnore, DrawDebugType, Results->ProfileResults.CapsuleResults.MultiHits, bIgnoreSelf, TraceColor, TraceHitColor, DrawTime);
+ 			}
+ 		}
+ 
+@@ -81,20 +81,20 @@
+ 		{
+ 			if (BatchOptions.bChannelTrace)
+ 			{
+-				Results->ChannelResults.BoxResults.bSingleResult = UKismetSystemLibrary::BoxTraceSingle(WorldContextObject, Start, End, BoxHalfSize, Orientation, TraceChannel, bTraceComplex, ActorsToIgnore, DrawDebugType, Results->ChannelResults.BoxResults.SingleHit, bIgnoreSelf, TraceColor, TraceHitColor, DrawTime);
+-				Results->ChannelResults.BoxResults.bMultiResult = UKismetSystemLibrary::BoxTraceMulti(WorldContextObject, Start, End, BoxHalfSize, Orientation, TraceChannel, bTraceComplex, ActorsToIgnore, DrawDebugType, Results->ChannelResults.BoxResults.MultiHits, bIgnoreSelf, TraceColor, TraceHitColor, DrawTime);
++				Results->ChannelResults.BoxResults.bSingleResult = UKismetSystemLibrary::BoxTraceSingle(WorldContextObject, Start, End, BoxHalfSize, Orientation, TraceLayer, TraceChannel, bTraceComplex, ActorsToIgnore, DrawDebugType, Results->ChannelResults.BoxResults.SingleHit, bIgnoreSelf, TraceColor, TraceHitColor, DrawTime);
++				Results->ChannelResults.BoxResults.bMultiResult = UKismetSystemLibrary::BoxTraceMulti(WorldContextObject, Start, End, BoxHalfSize, Orientation, TraceLayer, TraceChannel, bTraceComplex, ActorsToIgnore, DrawDebugType, Results->ChannelResults.BoxResults.MultiHits, bIgnoreSelf, TraceColor, TraceHitColor, DrawTime);
+ 			}
+ 			
+ 			if (BatchOptions.bObjectsTrace)
+ 			{
+-				Results->ObjectResults.BoxResults.bSingleResult = UKismetSystemLibrary::BoxTraceSingleForObjects(WorldContextObject, Start, End, BoxHalfSize, Orientation, ObjectTypes, bTraceComplex, ActorsToIgnore, DrawDebugType, Results->ObjectResults.BoxResults.SingleHit, bIgnoreSelf, TraceColor, TraceHitColor, DrawTime);
+-				Results->ObjectResults.BoxResults.bMultiResult = UKismetSystemLibrary::BoxTraceMultiForObjects(WorldContextObject, Start, End, BoxHalfSize, Orientation, ObjectTypes, bTraceComplex, ActorsToIgnore, DrawDebugType, Results->ObjectResults.BoxResults.MultiHits, bIgnoreSelf, TraceColor, TraceHitColor, DrawTime);
++				Results->ObjectResults.BoxResults.bSingleResult = UKismetSystemLibrary::BoxTraceSingleForObjects(WorldContextObject, Start, End, BoxHalfSize, Orientation, ObjectTypes, TraceLayer, bTraceComplex, ActorsToIgnore, DrawDebugType, Results->ObjectResults.BoxResults.SingleHit, bIgnoreSelf, TraceColor, TraceHitColor, DrawTime);
++				Results->ObjectResults.BoxResults.bMultiResult = UKismetSystemLibrary::BoxTraceMultiForObjects(WorldContextObject, Start, End, BoxHalfSize, Orientation, ObjectTypes, TraceLayer, bTraceComplex, ActorsToIgnore, DrawDebugType, Results->ObjectResults.BoxResults.MultiHits, bIgnoreSelf, TraceColor, TraceHitColor, DrawTime);
+ 			}
+ 
+ 			if (BatchOptions.bProfileTrace)
+ 			{
+-				Results->ProfileResults.BoxResults.bSingleResult = UKismetSystemLibrary::BoxTraceSingleByProfile(WorldContextObject, Start, End, BoxHalfSize, Orientation, ProfileName, bTraceComplex, ActorsToIgnore, DrawDebugType, Results->ProfileResults.BoxResults.SingleHit, bIgnoreSelf, TraceColor, TraceHitColor, DrawTime);
+-				Results->ProfileResults.BoxResults.bMultiResult = UKismetSystemLibrary::BoxTraceMultiByProfile(WorldContextObject, Start, End, BoxHalfSize, Orientation, ProfileName, bTraceComplex, ActorsToIgnore, DrawDebugType, Results->ProfileResults.BoxResults.MultiHits, bIgnoreSelf, TraceColor, TraceHitColor, DrawTime);
++				Results->ProfileResults.BoxResults.bSingleResult = UKismetSystemLibrary::BoxTraceSingleByProfile(WorldContextObject, Start, End, BoxHalfSize, Orientation, ProfileName, TraceLayer, bTraceComplex, ActorsToIgnore, DrawDebugType, Results->ProfileResults.BoxResults.SingleHit, bIgnoreSelf, TraceColor, TraceHitColor, DrawTime);
++				Results->ProfileResults.BoxResults.bMultiResult = UKismetSystemLibrary::BoxTraceMultiByProfile(WorldContextObject, Start, End, BoxHalfSize, Orientation, ProfileName, TraceLayer, bTraceComplex, ActorsToIgnore, DrawDebugType, Results->ProfileResults.BoxResults.MultiHits, bIgnoreSelf, TraceColor, TraceHitColor, DrawTime);
+ 			}
+ 		}
+ 
